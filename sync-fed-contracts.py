@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from bln.client import Client
 from fpds import fpdsRequest
 from tqdm import tqdm
 
 import asyncio
 import datetime
+from glob import glob
 from itertools import chain
 import json
 import os
@@ -33,6 +35,40 @@ def screen_files(localdate):
     return needfiles
 
 
+def send_files():
+    # Start by seeing what we have
+    rawfilenames = list(glob(datadir + "*"))
+    basefilenames = []
+    for rawfilename in rawfilenames:
+        basefilename = rawfilename.replace("\\", "/").replace(datadir, "")
+        basefilenames.append(basefilename)
+
+    bln_api = os.environ["BLN_API_TOKEN"]
+    bln = Client(bln_api)
+    project = bln.get_project_by_name("Federal contract cancellations")
+    project_id = project["id"]
+
+    files_to_send = []
+    # Get all the files in the project.
+    archived_files = {}
+    for f in project["files"]:
+        archived_files[f["name"]] = f["updatedAt"]
+
+    for basefilename in basefilenames:
+        if basefilename not in archived_files:
+            files_to_send.append(basefilename)
+
+    print(f"{len(archived_files):,} archived files found.")
+    print(f"{len(files_to_send):,} files to send to Big Local News.")
+    if len(files_to_send) == 0:
+        pass
+    else:
+        project_id = project["id"]
+        for file_to_send in tqdm(files_to_send):
+            bln.upload_file(project_id, datadir + file_to_send)
+    return
+
+
 async def fetch_a_date(localdate):
     needfiles = screen_files(localdate)
     if not needfiles:
@@ -57,6 +93,7 @@ if __name__ == "__main__":
     today = datetime.datetime.now()
     start = datetime.datetime(2025, 1, 20)
     days_to_find = (today - start).days
+    print(f"Reviewing records for {days_to_find:,} days. Any downloads will take some time.")
 
     # Build out a progress bar, because the code runs take time.
     with tqdm(total=days_to_find, desc="1900-00-00") as pbar:
@@ -65,10 +102,11 @@ if __name__ == "__main__":
             filedate = targetdate.strftime("%Y-%m-%d")
             pbar.set_description(filedate)
             data = asyncio.run(fetch_a_date(targetdate))
-            if data:     # If we got data back, not a None, save the data
+            if data:  # If we got data back, not a None, save the data
                 for reason in reasons:
                     filename = f"{datadir}/contracts-{filedate}_{reason}.json"
                     localdata = data[reason]
                     with open(filename, "w", encoding="utf-8") as outfile:
                         outfile.write(json.dumps(localdata, indent=4 * " "))
             pbar.update(1)
+    send_files()

@@ -2,12 +2,13 @@
 # coding: utf-8
 
 from fpds import fpdsRequest
+from tqdm import tqdm
 
 import asyncio
 import datetime
 from itertools import chain
 import json
-
+import os
 
 yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
     "%Y/%m/%d"
@@ -17,33 +18,57 @@ timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
 
 reasons = ["E", "F", "K", "N", "X"]
 
+datadir = "data/"
 
-async def main():
-    requests = {}
-    async with asyncio.TaskGroup() as tg:
-        for reason in reasons:
-            request = fpdsRequest(
-                LAST_MOD_DATE=f"[{yesterday}, {today}]",
-                REASON_FOR_MODIFICATION=f"{reason}",
-            )
-            requests[reason] = tg.create_task(request.data())
-    return {
-        reason: list(chain.from_iterable(request.result()))
-        for (reason, request) in requests.items()
-    }
+os.makedirs(datadir, exist_ok=True)
+
+
+async def fetch_a_date(localdate):
+    needfiles = False
+    filedate = localdate.strftime("%Y-%m-%d")
+    for reason in reasons:
+        filename = f"{datadir}/contracts-{filedate}_{reason}.json"
+        if not os.path.exists(filename):
+            needfiles = True
+    if needfiles:
+        requests = {}
+        requestdate = localdate.strftime("%Y/%m/%d")
+        async with asyncio.TaskGroup() as tg:
+            for reason in reasons:
+                request = fpdsRequest(
+                    LAST_MOD_DATE=f"[{requestdate}, {requestdate}]",
+                    REASON_FOR_MODIFICATION=f"{reason}",
+                )
+                requests[reason] = tg.create_task(request.data())
+        return {
+            reason: list(chain.from_iterable(request.result()))
+            for (reason, request) in requests.items()
+        }
 
 
 if __name__ == "__main__":
-    data = asyncio.run(main())
-    with open(f"output-{timestamp}.json", "w", encoding="utf-8") as outfile:
-        outfile.write(json.dumps(data, indent=4 * " "))
-
+    today = datetime.datetime.now()
+    start = datetime.datetime(2025, 1, 20)
+    days_to_find = (today - start).days
+    with tqdm(total=days_to_find, desc="1900-00-00") as pbar:
+        for dateincrement in range(0, days_to_find):
+            localdate = start + datetime.timedelta(days=dateincrement)
+            filedate = localdate.strftime("%Y-%m-%d")
+            pbar.set_description(filedate)
+            targetdate = start + datetime.timedelta(days=dateincrement)
+            data = asyncio.run(fetch_a_date(targetdate))
+            for reason in reasons:
+                filename = f"{datadir}/contracts-{filedate}_{reason}.json"
+                localdata = data[reason]
+                with open(filename, "w", encoding="utf-8") as outfile:
+                    outfile.write(json.dumps(localdata, indent=4 * " "))
+            pbar.update(1)
 
 ignore = """
 Ethan Corey's starting point:
 uvx fpds parse "LAST_MOD_DATE=[2025/01/20, 2025/02/14]" "REASON_FOR_MODIFICATION=F"
 
-From 
+From
 @Sarah Cohen
 , this is what's required to happen when the government terminates a contract for convenience. I don't know how well this requirement is being followed. https://www.dau.edu/acquipedia-article/contract-termination
 

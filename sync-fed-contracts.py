@@ -11,6 +11,7 @@ from glob import glob
 from itertools import chain
 import json
 import os
+import socket
 
 yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
     "%Y/%m/%d"
@@ -34,6 +35,11 @@ def screen_files(localdate):
             needfiles = True
     return needfiles
 
+
+def in_production():
+    if 'GITHUB_RUN_ID' in os.environ or socket.gethostname() in ["mikelight"]:
+        send_files()
+    
 
 def send_files():
     # Start by seeing what we have
@@ -109,4 +115,8 @@ if __name__ == "__main__":
                     with open(filename, "w", encoding="utf-8") as outfile:
                         outfile.write(json.dumps(localdata, indent=4 * " "))
             pbar.update(1)
-    send_files()
+
+    # We should only run this if it's in production. But for now:
+    if in_production:
+        print("We're in production")
+        send_files()

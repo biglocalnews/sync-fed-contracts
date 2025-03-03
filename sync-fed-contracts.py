@@ -37,7 +37,7 @@ def screen_files(localdate):
 
 
 def in_production():
-    if 'GITHUB_RUN_ID' in os.environ or socket.gethostname() in ["mikelight"]:
+    if 'GITHUB_RUN_ID' in os.environ or socket.gethostname() in ["mikelight", "racknerd-26f61a"]:
         send_files()
     
 

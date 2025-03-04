@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from bln.client import Client
-from fpds import fpdsRequest
-from tqdm import tqdm
-
 import asyncio
 import datetime
-from glob import glob
-from itertools import chain
 import json
 import os
 import socket
+from glob import glob
+from itertools import chain
+
+from bln.client import Client
+from fpds import fpdsRequest
+from tqdm import tqdm
 
 yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
     "%Y/%m/%d"
@@ -37,9 +37,14 @@ def screen_files(localdate):
 
 
 def in_production():
-    if 'GITHUB_RUN_ID' in os.environ or socket.gethostname() in ["mikelight", "racknerd-26f61a"]:
-        send_files()
-    
+    if "GITHUB_RUN_ID" in os.environ or socket.gethostname() in [
+        "mikelight",
+        "racknerd-26f61a",
+    ]:
+        return True
+    else:
+        return False
+
 
 def send_files():
     # Start by seeing what we have
@@ -99,7 +104,9 @@ if __name__ == "__main__":
     today = datetime.datetime.now()
     start = datetime.datetime(2025, 1, 20)
     days_to_find = (today - start).days
-    print(f"Reviewing records for {days_to_find:,} days. Any downloads will take some time.")
+    print(
+        f"Reviewing records for {days_to_find:,} days. Any downloads will take some time."
+    )
 
     # Build out a progress bar, because the code runs take time.
     with tqdm(total=days_to_find, desc="1900-00-00") as pbar:

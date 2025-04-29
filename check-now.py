@@ -7,7 +7,7 @@ if os.path.exists("/usr/bin/python3"):
 else:
     mypython = "python"
 
-os.system(f"{mypython} sync-fed-contract.py")
+os.system(f"{mypython} sync-fed-contracts.py")
 
 try:
     papermill.execute_notebook(

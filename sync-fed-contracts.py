@@ -36,50 +36,6 @@ def screen_files(localdate):
     return needfiles
 
 
-def in_production():
-    if "GITHUB_RUN_ID" in os.environ or socket.gethostname() in [
-        "mikelight",
-        "racknerd-26f61a",
-    ]:
-        return True
-    else:
-        return False
-
-
-def send_files():
-    # Start by seeing what we have
-    rawfilenames = list(glob(datadir + "*"))
-    basefilenames = []
-    for rawfilename in rawfilenames:
-        basefilename = rawfilename.replace("\\", "/").replace(datadir, "")
-        basefilenames.append(basefilename)
-
-    bln_api = os.environ["BLN_API_TOKEN"]
-    bln = Client(bln_api)
-    project = bln.get_project_by_name("Federal contract cancellations")
-    project_id = project["id"]
-
-    files_to_send = []
-    # Get all the files in the project.
-    archived_files = {}
-    for f in project["files"]:
-        archived_files[f["name"]] = f["updatedAt"]
-
-    for basefilename in basefilenames:
-        if basefilename not in archived_files:
-            files_to_send.append(basefilename)
-
-    print(f"{len(archived_files):,} archived files found.")
-    print(f"{len(files_to_send):,} files to send to Big Local News.")
-    if len(files_to_send) == 0:
-        pass
-    else:
-        project_id = project["id"]
-        for file_to_send in tqdm(files_to_send):
-            bln.upload_file(project_id, datadir + file_to_send)
-    return
-
-
 async def fetch_a_date(localdate):
     needfiles = screen_files(localdate)
     if not needfiles:
@@ -122,8 +78,3 @@ if __name__ == "__main__":
                     with open(filename, "w", encoding="utf-8") as outfile:
                         outfile.write(json.dumps(localdata, indent=4 * " "))
             pbar.update(1)
-
-    # We should only run this if it's in production. But for now:
-    if in_production:
-        print("We're in production")
-        send_files()

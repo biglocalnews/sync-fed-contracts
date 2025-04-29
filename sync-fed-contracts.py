@@ -9,7 +9,6 @@ import socket
 from glob import glob
 from itertools import chain
 
-from bln.client import Client
 from fpds import fpdsRequest
 from tqdm import tqdm
 

@@ -1,3 +1,6 @@
 bln
 fpds
+ipykernel
+jupyter
+papermill
 tqdm

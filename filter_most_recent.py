@@ -30,6 +30,7 @@ TARGET_FIELDS = [
     'business',
     'amount',
     'general_service_description',
+    'contract_requirement', # More detailed description of the contract
     'awardContractID__agencyID',
     'awardContractID__PIID',
     'awardContractID__modNumber',
@@ -42,6 +43,7 @@ TARGET_FIELDS = [
     'contractData__reasonForModification__description',
 ]
 
+FIRST_SCRAPE_DAY = datetime(2025, 1, 20) # There's older stuff in the data, but we only want to summarize entries from this date onward.
 
 def filter_file(target_file):
     """Filter the most recent entries in a CSV file based on the 'date' column.
@@ -73,10 +75,13 @@ def group_rows(target_file):
             )
             # Add date obj for downstream sorting
             row['modified_date'] = datetime.strptime(row['modified'], "%Y-%m-%d %H:%M:%S")
-            # Invert the "change" amount for more sensible graphing downstream
-            change = float(row.pop('change', 0))
-            row['amount'] = change * -1
-            grouped.setdefault(key, []).append(row)
+            if row['modified_date'] < FIRST_SCRAPE_DAY:
+                continue  # skip this row 
+            else:
+                # Invert the "change" amount for more sensible graphing downstream
+                change = float(row.pop('change', 0))
+                row['amount'] = change * -1
+                grouped.setdefault(key, []).append(row)
     return grouped
 
 def filter_groups(grouped_rows):

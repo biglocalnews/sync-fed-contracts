@@ -24,10 +24,22 @@ from operator import itemgetter
 from pathlib import Path
 
 TARGET_FIELDS = [
-    'state',
-    'county',
+    'state', # performance location
+    'county', # performance location
+    'agency',
+    'principalPlaceOfPerformance__stateCode',
+    'principalPlaceOfPerformance__countryCode__name',
+    'placeOfPerformanceZIPCode',
+    'placeOfPerformanceZIPCode__county',
+    'placeOfPerformanceZIPCode__city',
     'filedate',
     'business',
+    'vendorLocation__streetAddress',
+    'vendorLocation__city',
+    'vendorLocation__state',
+    'vendorLocation__ZIPCode_5',
+    'vendorLocation__ZIPCode_9',
+    'vendorLocation__countryCode__name',
     'amount',
     'general_service_description',
     'contract_requirement', # More detailed description of the contract
@@ -75,6 +87,8 @@ def group_rows(target_file):
             )
             # Add date obj for downstream sorting
             row['modified_date'] = datetime.strptime(row['modified'], "%Y-%m-%d %H:%M:%S")
+            row["vendorLocation__ZIPCode_9"] = row['vendorLocation__ZIPCode'] if row['vendorLocation__ZIPCode'] else None
+            row['vendorLocation__ZIPCode_5'] = row['vendorLocation__ZIPCode'][:5] if row['vendorLocation__ZIPCode'] else None
             if row['modified_date'] < FIRST_SCRAPE_DAY:
                 continue  # skip this row 
             else:

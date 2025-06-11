@@ -40,6 +40,7 @@ TARGET_FIELDS = [
     'vendorLocation__ZIPCode_5',
     'vendorLocation__ZIPCode_9',
     'vendorLocation__countryCode__name',
+    'vendorLocation__phoneNo',
     'amount',
     'general_service_description',
     'contract_requirement', # More detailed description of the contract

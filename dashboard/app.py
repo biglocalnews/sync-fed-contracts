@@ -128,8 +128,8 @@ def filter_by_vendor_location(df, selected_country, selected_state):
 
 st.title("Cancelled Fed Contracts")
 
-infile = Path(__file__).parent.joinpath("collected_F.filtered.csv")
-df = pandas.read_csv(infile)
+remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/collected_F.filtered.csv"
+df = pandas.read_csv(remote_data)
 
 ## Toggle one set of location dropdowns if the user wants to filter by Performance Location or Vendor Location
 location_type = st.sidebar.radio(

@@ -68,8 +68,6 @@ def disp_performance_filters(df):
     selected_state = "All"
     selected_county = "All"
     selected_country = "All"
-
-    """Display filters for performance location."""
     # sort list but put "United States" at the top
     selected_country = country_performance_select(df)
     print(f"Selected country: {selected_country}")
@@ -146,7 +144,7 @@ def filter_by_vendor_location(df, selected_country, selected_state):
         df = df[df['vendor_county'] == selected_county]
     return df
 
-st.title("Cancelled Fed Contracts")
+st.title("Federal Contracts Terminated for Convenience")
 
 remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/collected_F.filtered.csv"
 local_data = Path(__file__).parent / "../data/for_app/convenience--limited_cols.csv"
@@ -224,10 +222,7 @@ if selected_keyword:
 
 
 st.markdown("""
-This dashboard lets you explore and download data about canceled federal contracts.
-
-- :point_left: Use the dropdowns in the sidebar to filter the data by performance location or vendor location.
-- :arrow_down: Hover on the table to download the filtered data.
+This dashboard lets you explore and download data about canceled federal contracts. :point_left: Use the dropdowns in the sidebar to filter the data by performance location or vendor location. :arrow_down: Hover on the table to download the filtered data.
 
 """)
 
@@ -277,11 +272,15 @@ st.dataframe(df)
 
 st.markdown("""
 
-> TK Add links to platform, BLN, fed data portal, etc.
-> NOTE: This data is a subset of the [Big Local News Federal Contracts dataset](https://biglocalnews.org/federal-contracts/). It includes only select columns about contracts that were "Terminated for Convenience" (Collected_F.csv), and it is updated daily.
->
-> There is a lag in reporting some terminations. The earliest data in this dashboard was retrieved on January 20, 2025 and includes contracts that were reported as terminated for convenience on or after that date. The actual date of termination is found in the "date_cancelled" column, and can be filtered in the sidebar.
->
+            
+### This is not the full dataset.
+We’ve limited the number of columns and renamed them for clarity and ease of use. You can find a full list of original column names and definitions here, and download the complete dataset — including both renamed and original columns — as the [Big Local News Federal Contracts dataset](https://biglocalnews.org/federal-contracts/) (accessible with a free account). The data was sourced from this [federal procurement portal](https://www.fpds.gov/fpdsng_cms/index.php/en/) using the code in [this GitHub repository](https://github.com/biglocalnews/sync-fed-contracts).
+
+We also limited the data only to terminations “for convenience.” This excludes contracts terminated for cause, default, legal reasons, or administrative closeout. You can read more about how terminations are categorized [here](https://www.dau.edu/acquipedia-article/contract-termination).
+
+### Date filters are based on the cancellation date.
+Our system gathers contract termination records as they are reported to FPDS. We began collecting data on January 20, but users may see contracts canceled before that date due to reporting delays — for example, some Q4 terminations from the previous year were not reported until after 1/20.
+Similarly, data from the current quarter may be incomplete due to lag in reporting. By default, the dashboard filters for contracts canceled on or after 1/20, but you can adjust the date filter to explore earlier records.
 
 &copy; Big Local News (2025)
 

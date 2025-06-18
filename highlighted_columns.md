@@ -69,7 +69,7 @@ A link to the contract ID searched on fpds.gov. ("link__href")
 "Enter a brief, summary level, plain English, description of the contract, award, or
 modification"
 
-Corresponds to "contractData__descriptionOfContractRequirement" or "6M Description of Requirement" in FPDS.
+Corresponds to "contractData__descriptionOfContractRequirement" or "6M Description of Requirement" in FPDS. Appears to sometimes describe the contract or award, and other times the actual termination
 
 ### general_service_description
 "A description of the product or service designated by the product service code."

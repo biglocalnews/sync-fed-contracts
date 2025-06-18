@@ -90,7 +90,7 @@ def filter_by_performance_location(df, selected_country, selected_state, selecte
 
 def country_vendor_select(df):
     """Display a selectbox for vendor country."""
-    country_options = sorted(df['vendorLocation__countryCode__name'].dropna().unique().tolist())
+    country_options = sorted(df['vendor_country'].dropna().unique().tolist())
     country_options.sort(key=lambda x: (x != "UNITED STATES", x))
     selected_country = st.sidebar.selectbox(
         "Filter by Vendor Country:",
@@ -100,7 +100,7 @@ def country_vendor_select(df):
 
 def state_vendor_select(df, selected_country):
     """Display a selectbox for vendor state."""
-    state_options = sorted(df[df['vendorLocation__countryCode__name'] == selected_country]['vendorLocation__state'].dropna().unique().tolist())
+    state_options = sorted(df[df['vendor_country'] == selected_country]['vendor_state'].dropna().unique().tolist())
     print(f"State options for {selected_country}: {state_options}")
     selected_state = st.sidebar.selectbox(
         "Filter by Vendor State:",
@@ -110,7 +110,7 @@ def state_vendor_select(df, selected_country):
 
 def county_vendor_select(df, selected_state):
     """Display a selectbox for vendor county code based on selected state."""
-    zip_codes = df[df['vendorLocation__state'] == selected_state]['vendor_county'].dropna().unique().tolist()
+    zip_codes = df[df['vendor_state'] == selected_state]['vendor_county'].dropna().unique().tolist()
     with st.sidebar.expander(f"Counties in {selected_state}", expanded=True):
         selected_zip = st.sidebar.selectbox(
             "Filter by Vendor county:",
@@ -134,7 +134,7 @@ def disp_vendor_filters(df):
             selected_county = county_vendor_select(df, selected_state)
     return selected_country, selected_state, selected_county
 
-def filter_by_vendor_location(df, selected_country, selected_state):
+def filter_by_vendor_location(df, selected_country, selected_state, selected_county):
     """Filter the DataFrame based on vendor location selections."""
     if selected_country != "All":
         df = df[df['vendor_country'] == selected_country]
@@ -172,10 +172,10 @@ if location_type == "Performance Location (where the work took place)":
     df = filter_by_performance_location(df, selected_country, selected_state, selected_county)
 
 else:
-    selected_country, selected_state  = disp_vendor_filters(df)
+    selected_country, selected_state,selected_county  = disp_vendor_filters(df)
     selected_county = "All"
     # Filter the DataFrame based on vendor location selections
-    df = filter_by_vendor_location(df, selected_country, selected_state)
+    df = filter_by_vendor_location(df, selected_country, selected_state,selected_county)
 
 
 # Search vendor name -- multiselect from dropdown but type to search

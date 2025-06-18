@@ -107,9 +107,7 @@ Deobligations are represented in the original data as negative numbers. We've in
 
 ### filename
 
-### dei_flags
-
-
-### has_dei_flags
+### business_designations
+[[ROSIE NOTE: Are the flags themselves documented somewhere?]]
 
 ### is_nonprofit

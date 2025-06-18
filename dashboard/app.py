@@ -14,10 +14,30 @@ from pathlib import Path
 import streamlit as st
 import altair as alt
 import pandas
+import datetime
+
+DEFAULT_START_DATE = pandas.to_datetime("01-20-2025")  # Default start date for the date range slider
+
+def select_date_range(df):
+    """Display a date range slider to filter the DataFrame with an optional default start date."""
+    min_date = df['date_cancelled'].min()
+    max_date = df['date_cancelled'].max()
+
+    date_range = st.sidebar.date_input(
+        "Select date range (Cancelled Date):",
+        value=(DEFAULT_START_DATE, max_date),
+        min_value=min_date,
+        max_value=max_date
+    )
+
+    if len(date_range) ==2:
+        start_date, end_date = date_range
+        return start_date, end_date
+    return date_range[0], max_date
 
 def country_performance_select(df):
     """Display a selectbox for country performance."""
-    country_options = sorted(df['principalPlaceOfPerformance__countryCode__name'].dropna().unique().tolist())
+    country_options = sorted(df['performance_country'].dropna().unique().tolist())
     country_options.sort(key=lambda x: (x != "UNITED STATES", x))
     selected_country = st.sidebar.selectbox(
         "Filter by Performance Country:",
@@ -27,7 +47,7 @@ def country_performance_select(df):
 
 def state_performance_select(df):
     """Display a selectbox for state performance."""
-    state_options = sorted(df['state'].dropna().unique().tolist())
+    state_options = sorted(df['performance_state'].dropna().unique().tolist())
     selected_state = st.sidebar.selectbox(
         "Filter by Performance State:",
         options=["All"] + state_options
@@ -36,7 +56,7 @@ def state_performance_select(df):
 
 def county_performance_select(df, selected_state):
     """Display a selectbox for county performance based on selected state."""
-    counties = df[df['state'] == selected_state]['placeOfPerformanceZIPCode__county'].dropna().unique().tolist()
+    counties = df[df['performance_state'] == selected_state]['performance_county'].dropna().unique().tolist()
     with st.sidebar.expander(f"Counties in {selected_state}", expanded=True):
         selected_county = st.sidebar.selectbox(
             "Filter by Performance County:",
@@ -63,11 +83,11 @@ def disp_performance_filters(df):
 def filter_by_performance_location(df, selected_country, selected_state, selected_county):
     """Filter the DataFrame based on performance location selections."""
     if selected_country != "All":
-        df = df[df['principalPlaceOfPerformance__countryCode__name'] == selected_country]
+        df = df[df['performance_country'] == selected_country]
     if selected_state != "All":
-        df = df[df['state'] == selected_state]
+        df = df[df['performance_state'] == selected_state]
     if selected_county != "All":
-        df = df[df['placeOfPerformanceZIPCode__county'] == selected_county]
+        df = df[df['performance_county'] == selected_county]
     return df
 
 def country_vendor_select(df):
@@ -90,19 +110,19 @@ def state_vendor_select(df, selected_country):
     )
     return selected_state
 
-# def zip_vendor_select(df, selected_state):
-#     """Display a selectbox for vendor ZIP code based on selected state."""
-#     zip_codes = df[df['vendorLocation__state'] == selected_state]['vendorLocation__ZIPCode_5'].dropna().unique().tolist()
-#     with st.sidebar.expander(f"ZIP Codes in {selected_state}", expanded=True):
-#         selected_zip = st.sidebar.selectbox(
-#             "Filter by Vendor ZIP Code:",
-#             options=["All"] + sorted(zip_codes)
-#         )
-#     return selected_zip
+def county_vendor_select(df, selected_state):
+    """Display a selectbox for vendor county code based on selected state."""
+    zip_codes = df[df['vendorLocation__state'] == selected_state]['vendor_county'].dropna().unique().tolist()
+    with st.sidebar.expander(f"Counties in {selected_state}", expanded=True):
+        selected_zip = st.sidebar.selectbox(
+            "Filter by Vendor county:",
+            options=["All"] + sorted(zip_codes)
+        )
+    return selected_zip
 
 def disp_vendor_filters(df):
     selected_state = "All"
-    selected_zip = "All"
+    selected_county = "All"
     selected_country = "All"
 
     """Display filters for vendor location."""
@@ -111,31 +131,41 @@ def disp_vendor_filters(df):
     print(f"Selected country: {selected_country}")
     if (selected_country == "UNITED STATES"):
         selected_state = state_vendor_select(df,selected_country)
-        # IF selected_state != "All", then filter zip codes by that state
-        # if selected_state != "All":
-        #     selected_zip = zip_vendor_select(df, selected_state)
-    return selected_country, selected_state #, selected_zip
+        # If selected_state != "All", then filter counties by that state
+        if selected_state != "All":
+            selected_county = county_vendor_select(df, selected_state)
+    return selected_country, selected_state, selected_county
 
 def filter_by_vendor_location(df, selected_country, selected_state):
     """Filter the DataFrame based on vendor location selections."""
     if selected_country != "All":
-        df = df[df['vendorLocation__countryCode__name'] == selected_country]
+        df = df[df['vendor_country'] == selected_country]
     if selected_state != "All":
-        df = df[df['vendorLocation__state'] == selected_state]
-    # if selected_zip != "All":
-    #     df = df[df['vendorLocation__ZIPCode_5'] == selected_zip]
+        df = df[df['vendor_state'] == selected_state]
+    if selected_county != "All":
+        df = df[df['vendor_county'] == selected_county]
     return df
 
 st.title("Cancelled Fed Contracts")
 
 remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/collected_F.filtered.csv"
-df = pandas.read_csv(remote_data)
+local_data = Path(__file__).parent / "../data/for_app/convenience--limited_cols.csv"
+df = pandas.read_csv(local_data)
+
+
+start_date, end_date = select_date_range(df)
+# Filter the DataFrame based on the selected date range
+df['date_cancelled'] = pandas.to_datetime(df['date_cancelled'], errors='coerce')
+df = df[(df['date_cancelled'] >= pandas.to_datetime(start_date)) & (df['date_cancelled'] <= pandas.to_datetime(end_date))]
+
+
 
 ## Toggle one set of location dropdowns if the user wants to filter by Performance Location or Vendor Location
 location_type = st.sidebar.radio(
     "Location type to filter by:",
     options=["Performance Location (where the work took place)", "Vendor Location (where the vendor is based)"]
 )
+
 
 if location_type == "Performance Location (where the work took place)":
 
@@ -153,19 +183,19 @@ else:
 # Search vendor name -- multiselect from dropdown but type to search
 selected_vendor = st.sidebar.multiselect(
     "Filter by Vendor Name:",
-    options=sorted(df['business'].dropna().unique().tolist()),
+    options=sorted(df['vendor'].dropna().unique().tolist()),
     default=[]
 )
 
 # Search department name -- multiselect from dropdown but type to search
 selected_department = st.sidebar.multiselect(
     "Filter by Department Name:",
-    options=sorted(df['contractingOfficeAgencyID__departmentName'].dropna().unique().tolist()),
+    options=sorted(df['department'].dropna().unique().tolist()),
     default=[]
 )
 
 if selected_department:
-    df = df[df['contractingOfficeAgencyID__departmentName'].isin(selected_department)]
+    df = df[df['department'].isin(selected_department)]
 
 # Search agency name -- multiselect from dropdown but type to search
 selected_agency = st.sidebar.multiselect(
@@ -181,7 +211,7 @@ selected_keyword = st.sidebar.text_input(
 )
 # Filter the DataFrame based on vendor selection
 if selected_vendor:
-    df = df[df['business'].isin(selected_vendor)]
+    df = df[df['vendor'].isin(selected_vendor)]
 # Filter the DataFrame based on agency selection
 if selected_agency:
     df = df[df['agency'].isin(selected_agency)]
@@ -190,7 +220,6 @@ if selected_keyword:
     keyword_lower = selected_keyword.lower()
     df = df[df['general_service_description'].str.lower().str.contains(keyword_lower, na=False) |
             df['contract_requirement'].str.lower().str.contains(keyword_lower, na=False)]
-# Filter the DataFrame based on county selection
 
 
 
@@ -250,7 +279,9 @@ st.markdown("""
 
 > TK Add links to platform, BLN, fed data portal, etc.
 > NOTE: This data is a subset of the [Big Local News Federal Contracts dataset](https://biglocalnews.org/federal-contracts/). It includes only select columns about contracts that were "Terminated for Convenience" (Collected_F.csv), and it is updated daily.
-
+>
+> There is a lag in reporting some terminations. The earliest data in this dashboard was retrieved on January 20, 2025 and includes contracts that were reported as terminated for convenience on or after that date. The actual date of termination is found in the "date_cancelled" column, and can be filtered in the sidebar.
+>
 
 &copy; Big Local News (2025)
 

@@ -146,9 +146,9 @@ def filter_by_vendor_location(df, selected_country, selected_state, selected_cou
 
 st.title("Federal Contracts Terminated for Convenience")
 
-remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/collected_F.filtered.csv"
+remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/convenience--limited_cols.csv"
 local_data = Path(__file__).parent / "../data/for_app/convenience--limited_cols.csv"
-df = pandas.read_csv(local_data)
+df = pandas.read_csv(remote_data)
 
 
 start_date, end_date = select_date_range(df)

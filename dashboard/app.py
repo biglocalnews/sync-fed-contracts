@@ -205,7 +205,7 @@ selected_agency = st.sidebar.multiselect(
 # Keyword search general_service_description and contract_requirement
 selected_keyword = st.sidebar.text_input(
     "Search by Keyword:",
-    placeholder="Search service description & contract requirement. E.g., 'weapon', 'janitor', etc.",
+    placeholder="Search product/service description & contract requirement. E.g., 'weapon', 'janitor', etc.",
 )
 # Filter the DataFrame based on vendor selection
 if selected_vendor:
@@ -216,7 +216,7 @@ if selected_agency:
 # Filter the DataFrame based on keyword search
 if selected_keyword:
     keyword_lower = selected_keyword.lower()
-    df = df[df['general_service_description'].str.lower().str.contains(keyword_lower, na=False) |
+    df = df[df['product_or_service_description'].str.lower().str.contains(keyword_lower, na=False) |
             df['contract_requirement'].str.lower().str.contains(keyword_lower, na=False)]
 
 

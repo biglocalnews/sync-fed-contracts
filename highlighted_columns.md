@@ -6,78 +6,85 @@ Unless otherwise noted, quotes are from the [FPDS Data Dictionary](https://www.f
 
 
 ### contract_id
-"The unique identifier for each contract, agreement or order"
+1A Procurement Instrument Identifier (PIID): "The unique identifier for each contract, agreement or order"
 
-Searchable in USASpending.gov as "Award ID." Corresponds to "awardContractID__PIID" or "1A Procurement Instrument Identifier (PIID)" in FPDS. The combination of contract_id and modification_number uniquely identifies a cancellation.
+The combination of contract_id, modification_number, and agency_id uniquely identifies a cancellation.
+
+Searchable in USASpending.gov as "Award ID." Also known as "awardContractID__PIID."
 
 ### modification_number
-"An identifier issued by an agency that uniquely identifies one modification for
+1B Modification Number: "An identifier issued by an agency that uniquely identifies one modification for
 one contract, agreement, order, etc."
 
-Corresponds to transaction records on a particular award in USASpending.gov. Corresponds to "awardContractID__modNumber" or "1B Modification Number" in FPDS. The combination of contract_id and modification_number uniquely identifies a cancellation. Multiple updates to the records of the same cancellation sometimes appear in the underlying data, our compiled csvs are deduplicated to only include the most recent record for each.
+Multiple updates to the records of the same cancellation sometimes appear in the underlying data, our compiled csvs are deduplicated to only include the most recent record for each. Corresponds to transaction records on a particular award in USASpending.gov.  The combination of contract_id, modification_number, and agency_id uniquely identifies a cancellation.
 
-[[ROSIE NOTE: This is different from Sara's hunch that we also needed Agency ID. But it appears PIIDs are unique government-wide, not just within agencies (["each PIID used to identify a solicitation or contract action is unique Governmentwide"](https://www.acquisition.gov/far/subpart-4.16)) This checks out: when we remove agency_id from the dedupe it's functionally equivalent.]]
+Same as "Modification Number" in USASpending.gov. Also known as "awardContractID__modNumber."
 
-### performance_country, performance_state, performance_county, performance_zip9
-"For Services: The predominant place of performance at the time of award. Predominance is based on funding."
+### performance_zip9, performance_county, performance_state, performance_country 
+For Services: The predominant place of performance at the time of award. Predominance is based on funding.
 
-"If the place of performance is located in the U.S. in an area that has no ZIP Plus 4 code (e.g., a national park, a remote location, etc.), use the closest location that does have a ZIP Plus 4. NOTE: Not all procurements require documentation of the place of performance in the file."
+Subfields 9C Principal Place of Performance Code: "If the place of performance is located in the U.S. in an area that has no ZIP Plus 4 code (e.g., a national park, a remote location, etc.), use the closest location that does have a ZIP Plus 4. NOTE: Not all procurements require documentation of the place of performance in the file."
 
-Correspond to the records under "principalPlaceOfPerformance" or "Principal Place of Performance Code" in FPDS. The actual specification for these record in the data dictionary is quite long and addresses how to handle cases where the performance location is ambiguous.
+Also known as "principalPlaceOfPerformance." The actual specification in the data dictionary is quite long and addresses how to handle cases where the performance location is ambiguous.
 
-### vendor_country, vendor_state, vendor_zip9, vendor_address
-"The address of the entity supplying the product or service as it appears in SAM at
-the time of the award based on the Unique Entity Identifier provided."
+### vendor_address, vendor_zip9, vendor_state, vendor_country,
+13JJ Entity Address Line 1:	"The address of the entity supplying the product or service as it appears in SAM at the time of the award based on the Unique Entity Identifier provided."
 
-Correspond to records under "vendorLocation" or "Entity Address", "Entity Country Code" in FPDS.
+13PP Entity Zip Code, 13MM Entity Address City, 13NN Entity Address State, 13QQ Entity Country Code
+
+Also known as "vendorLocation."
+
+### vendor_county
+We calculated this by truncating *vendor_zip9* (above) to a 5-digit zipcode, and looking it up in a Census crosswalk.
 
 ### vendor_phone
-"The phone number of the entity."
+13RR Entity Phone Number: "The phone number of the entity."
 
-Corresponds to "vendor_phoneNo" or "13RR Entity Phone Number" in FPDS.
+Also known as "vendor_phoneNo."
 
 ### date_cancelled
-"The date that a mutually binding agreement was reached. The date signed by the
-Contracting Officer or the Entity, whichever is later."
+2A Date Signed: "The date that a mutually binding agreement was reached. The date signed by the Contracting Officer or the Entity, whichever is later."
 
-Corresponds to "relevantContractDates__signedDate" or "2A Date Signed" in FPDS. This date seems corresponds to "Action Date" in USASpending.gov, and seems to apply to the day the *cancellation itself* was signed.
+We confirmed with Federal Service Desk that this field represents the date of cancellation.
+
+Corresponds to "Action Date" in USASpending.gov.Also known as "relevantContractDates__signedDate".
+
+### amount_cancelled
+Derived from 3C Action Obligation in FPDS: "The amount that is obligated or de-obligated by this transaction."
+
+Deobligations are represented in the original data as negative numbers. We've inverted them (multiplied by -1) so that amount_cancelled is positive if money is deobligated. Corresponds to the amount "saved" by cancelling the contract.
+
+3C Action Obligation is also known as "dollarValues__obligatedAmount," and corresponds to the "Amount" associated with a transaction in USASpending.gov
 
 ### vendor
-"The name of the entity supplying the product or service as it appears in SAM at
-the time of the award based on the Unique Entity Identifier provided."
+13GG Legal Business Name: "The name of the entity supplying the product or service as it appears in SAM at the time of the award based on the Unique Entity Identifier provided."
 
-Corresponds to "UEILegalBusinessName" or "13GG Legal Business Name" in FPDS.
+Also known as "UEILegalBusinessName."
 
 ### agency
-The agency that owns the *contract_id*, responsible for issuing the contract or award.
+1F Agency Code: "Identifier used to link agency in FPDS to award information"
 
-Corresponds to "awardContractID__agencyID__name" or the agency name linked to "1F Agency Code" in FPDS. Also "Agency Name" in the [FPDS API](https://www.fpds.gov/wiki/index.php/Atom_Feed_Usage).
-
-[[ROSIE NOTE: There are several different agency fields -- I think they generally line up but I'm not sure which one to use/where the actual documentation about this is]]
+The agency that owns the *contract_id*, responsible for issuing the contract or award. Also known as "awardContractID__agencyID__name." Corresponds to "Agency" in USASpending.gov
 
 ### department
-The department containing the agency that operates the office that awarded the contract.
+Derived from 4A Contracting Agency Code: "The code for the agency of the contracting office that executed or is otherwise responsible for the transaction."
 
-Corresponds to "contractingOfficeAgencyID__departmentName" or the department name linked to the agency indicated in "4A Contracting Agency Code" in FPDS. Also "Department Name" in the [FPDS API](https://www.fpds.gov/wiki/index.php/Atom_Feed_Usage).
+The department overseeing the agency whose office is responsible for the modification.
 
-### fpds_url
-A link to the contract ID searched on fpds.gov. ("link__href")
-
-[[ROSIE NOTE: This also is neither in the data dict or that atom feed site. I guess it comes from the python wrapepr we're using?]]
+Also known as "contractingOfficeAgencyID__departmentName."
 
 ### contract_requirement
-"Enter a brief, summary level, plain English, description of the contract, award, or
-modification"
+6M Description of Requirement: "Enter a brief, summary level, plain English, description of the contract, award, or modification"
 
-Corresponds to "contractData__descriptionOfContractRequirement" or "6M Description of Requirement" in FPDS. Appears to sometimes describe the contract or award, and other times the actual termination
+Appears to sometimes describe the contract or award, and other times the actual termination. Also known as "contractData__descriptionOfContractRequirement."
 
-### general_service_description
-"A description of the product or service designated by the product service code."
+### product_or_service_description
+8C Product Service Code Description: "A description of the product or service designated by the product service code."
 
-Corresponds to "productOrServiceInformation__productOrServiceCode__description" or "8C Product Service Code Description" in FPDS.
+Also known as "productOrServiceInformation__productOrServiceCode__description."
 
 ### reason_code, reason
-"The type of modification to an award or IDV performed by this transaction."
+12C Reason for Modification: "The type of modification to an award or IDV performed by this transaction."
 
 | Code | Short Description                                                                 |
 |------|------------------------------------------------------------------------------------|
@@ -87,27 +94,21 @@ Corresponds to "productOrServiceInformation__productOrServiceCode__description" 
 | N    | Legal Contract Cancellation                                                       |
 | X    | Terminate for Cause                                                               |
 
-Corresponds to "12C Reason for Modification" in FPDS
-
 ### last_updated
-"The date and time the transaction was last validated and accepted by FPDS."
+2F Date/Time Stamp Accepted: "The date and time the transaction was last validated and accepted by FPDS."
 
-Corresponds to "modified" or "2F Date/Time Stamp Accepted" in FPDS.
+Also known as "modified."
 
-## Original Fields
-### vendor_county
-We calculated this by truncating *vendor_zip9* to a 5-digit zipcode, and looking it up in a Census crosswalk.
-
-### amount_cancelled
-Derived from "3C Action Obligation" in FPDS: "The amount that is obligated or de-obligated by this transaction."
-
-Deobligations are represented in the original data as negative numbers. We've inverted them so the amount cancelled is positive if money is deobligated. Corresponds to the amount "saved" by cancelling the contract.
+### vendor_attributes
+13 Entity Business Types: Each business type attribute has its own definition, we recommend looking at the data dictionary for details
 
 ### filedate
+The Big Local News script gets a list of contract terminations daily and logs them in json files. 
+
+This is the day that the file this cancellation appears in was written.
 
 ### filename
+The name of the json file on Big Local News' website that this modification appears in.
 
-### business_designations
-[[ROSIE NOTE: Are the flags themselves documented somewhere?]]
-
-### is_nonprofit
+### fpds_url
+A link to the contract ID searched on fpds.gov.

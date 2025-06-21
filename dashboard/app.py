@@ -1,6 +1,5 @@
 """
 Things to (possibly) update or add:
-- Flesh out the footer (see bottom of this script)
 - PullQuote style numbers
 - Add clickable links to the table that go to contract pages
 - Loading from remote CSV file(s)
@@ -219,12 +218,12 @@ if selected_keyword:
     df = df[df['product_or_service_description'].str.lower().str.contains(keyword_lower, na=False) |
             df['contract_requirement'].str.lower().str.contains(keyword_lower, na=False)]
 
-
-
 st.markdown("""
 This dashboard lets you explore and download data about canceled federal contracts. :point_left: Use the dropdowns in the sidebar to filter the data by performance location or vendor location. :arrow_down: Hover on the table to download the filtered data.
 
 """)
+
+st.info("""[Data dictionary](https://github.com/biglocalnews/sync-fed-contracts/blob/app/highlighted_columns.md)""")
 
 # # Filter the DataFrame based on selection
 # if selected_state == "All":

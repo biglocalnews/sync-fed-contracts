@@ -33,43 +33,16 @@ def archive_json(deleteafterarchiving=True):
             duplicates.append(rawfile)
     if len(duplicates) > 0:
         message = (
-            f"{len(duplicates):,} duplicates found, both loose JSON and in the ZIP. "
-        )
-        message += f"You'll want to clear these out yourself. This program will neither replace nor "
-        message += "delete them."
-        logger.debug(message)
-    for duplicate in duplicates:
-        rawfiles.remove(duplicate)
-    logger.debug(f"{len(rawfiles):,} files remain to be added to the ZIP.")
-    if len(rawfiles) == 0:
-        return
-    logger.debug(f"Confirmed: Writing {len(rawfiles):,} files to archive.")
-    with zipfile.ZipFile(archivefile, "a", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as myzip:
-        for rawfile in tqdm(rawfiles):
-            myzip.write(
-                filename=datadir + rawfile,
-                arcname=rawfile,
-                compress_type=zipfile.ZIP_DEFLATED,
-                compresslevel=9,
-            )
-            if deleteafterarchiving:
-                os.remove(datadir + rawfile)
-    # Need to upload to BLN after this ... or just handle with any in_production pushing?
-    return
-
-
-def list_json():
-    rawfiles = list_loose_json()
-    zippedfiles = list_archived_json()
-    return zippedfiles.extend(rawfiles)
-
-
+            f"{len(duplicates):,} duplicates found, b
+            
 def list_archived_json():
     if not os.path.exists(archivefile):
+        logger.warning(f"No archive file at {archivefile} found")
         zippedfiles = []
     else:
         with zipfile.ZipFile(archivefile, "r") as myzip:
             zippedfiles = myzip.namelist()
+            logger.debug(f"{len(zippedfiles):,} files found in {archivefile}")
     return zippedfiles
 
 

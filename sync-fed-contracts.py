@@ -12,6 +12,8 @@ from itertools import chain
 from fpds import fpdsRequest
 from tqdm import tqdm
 
+from utils import *
+
 yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
     "%Y/%m/%d"
 )
@@ -25,18 +27,20 @@ datadir = "data/"
 os.makedirs(datadir, exist_ok=True)
 
 
-def screen_files(localdate):
+def screen_files(localdate, json_avail):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
     for reason in reasons:
         filename = f"{datadir}/contracts-{filedate}_{reason}.json"
-        if not os.path.exists(filename):
+        if filename not in json_avail:
             needfiles = True
+        # if not os.path.exists(filename):
+        #    needfiles = True
     return needfiles
 
 
-async def fetch_a_date(localdate):
-    needfiles = screen_files(localdate)
+async def fetch_a_date(localdate, json_avail):
+    needfiles = screen_files(localdate, json_avail)
     if not needfiles:
         return None
     else:
@@ -56,6 +60,7 @@ async def fetch_a_date(localdate):
 
 
 if __name__ == "__main__":
+    json_avail = list_json()
     today = datetime.datetime.now()
     start = datetime.datetime(2025, 1, 20)
     days_to_find = (today - start).days
@@ -69,7 +74,7 @@ if __name__ == "__main__":
             targetdate = start + datetime.timedelta(days=dateincrement)
             filedate = targetdate.strftime("%Y-%m-%d")
             pbar.set_description(filedate)
-            data = asyncio.run(fetch_a_date(targetdate))
+            data = asyncio.run(fetch_a_date(targetdate, json_avail))
             if data:  # If we got data back, not a None, save the data
                 for reason in reasons:
                     filename = f"{datadir}/contracts-{filedate}_{reason}.json"

@@ -63,7 +63,9 @@ def archive_json(deleteafterarchiving=True):
 def list_json():
     rawfiles = list_loose_json()
     zippedfiles = list_archived_json()
-    return zippedfiles.extend(rawfiles)
+    zippedfiles.extend(rawfiles)
+    logger.debug(f"{len(zippedfiles):,} total files found, with possible overlaps.")
+    return zippedfiles
 
 
 def list_archived_json():
@@ -82,4 +84,5 @@ def list_loose_json():
     rawfiles = []
     for rawfileraw in rawfilesraw:
         rawfiles.append(str(Path(rawfileraw).relative_to(datadir)))
+    logger.debug(f"{len(rawfiles):,} files found loose.")
     return rawfiles

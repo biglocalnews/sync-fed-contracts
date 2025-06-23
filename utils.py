@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 # Very basic config
 datadir = "data/"
-archivefile = f"{datadir}archive.zip"
+archivefile = f"{datadir}archived_json.zip"
 
 # Force logging
 reload(logging)

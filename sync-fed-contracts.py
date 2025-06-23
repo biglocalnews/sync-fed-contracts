@@ -37,7 +37,6 @@ logger = logging.getLogger()
 
 json_avail = list_json()
 
-
 def screen_files(localdate):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
@@ -84,7 +83,7 @@ if __name__ == "__main__":
             targetdate = start + datetime.timedelta(days=dateincrement)
             filedate = targetdate.strftime("%Y-%m-%d")
             pbar.set_description(filedate)
-            data = asyncio.run(fetch_a_date(targetdate, json_avail))
+            data = asyncio.run(fetch_a_date(targetdate))
             if data:  # If we got data back, not a None, save the data
                 for reason in reasons:
                     filename = f"{datadir}/contracts-{filedate}_{reason}.json"

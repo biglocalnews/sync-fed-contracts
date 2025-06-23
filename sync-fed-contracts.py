@@ -41,11 +41,13 @@ def screen_files(localdate):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
     for reason in reasons:
-        filename = f"{datadir}/contracts-{filedate}_{reason}.json"
+        filename = f"contracts-{filedate}_{reason}.json"
         if filename not in json_avail:
             needfiles = True
         # if not os.path.exists(filename):
         #    needfiles = True
+    if needfiles:
+        logger.debug(f"Need files for {localdate}")
     return needfiles
 
 

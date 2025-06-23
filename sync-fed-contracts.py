@@ -26,8 +26,19 @@ datadir = "data/"
 
 os.makedirs(datadir, exist_ok=True)
 
+# Force logging
+reload(logging)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s:%(message)s",
+    level=logging.DEBUG,
+    datefmt="%I:%M:%S",
+)
+logger = logging.getLogger()
 
-def screen_files(localdate, json_avail):
+json_avail = list_json()
+
+
+def screen_files(localdate):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
     for reason in reasons:
@@ -39,8 +50,8 @@ def screen_files(localdate, json_avail):
     return needfiles
 
 
-async def fetch_a_date(localdate, json_avail):
-    needfiles = screen_files(localdate, json_avail)
+async def fetch_a_date(localdate):
+    needfiles = screen_files(localdate)
     if not needfiles:
         return None
     else:
@@ -60,7 +71,6 @@ async def fetch_a_date(localdate, json_avail):
 
 
 if __name__ == "__main__":
-    json_avail = list_json()
     today = datetime.datetime.now()
     start = datetime.datetime(2025, 1, 20)
     days_to_find = (today - start).days

@@ -17,4 +17,10 @@ try:
         log_level="debug",
     )
 except:
-    print("Failure!")
+    print("Failure with extract!")
+
+try:
+    os.system(f"{mypython} filter_for_dashboard.py")
+
+except:
+    print("Failure with filter!")

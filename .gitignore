@@ -5,5 +5,5 @@ disused/
 collected*.csv
 column_review.csv
 file_summaries.csv
-
+ignore-*.ipynb
 Untitled.ipynb

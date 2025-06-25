@@ -9,10 +9,10 @@ Things to (possibly) update or add:
 
 """
 
-import datetime
+# import datetime
 from pathlib import Path
 
-import altair as alt
+# import altair as alt
 import pandas
 import streamlit as st
 
@@ -185,7 +185,7 @@ df = df[
 ]
 
 
-## Toggle one set of location dropdowns if the user wants to filter by Performance Location or Vendor Location
+# Toggle one set of location dropdowns if the user wants to filter by Performance Location or Vendor Location
 location_type = st.sidebar.radio(
     "Location type to filter by:",
     options=[
@@ -315,7 +315,7 @@ st.dataframe(df)
 st.markdown(
     """
 
-            
+
 ### This is not the full dataset.
 We’ve limited the number of columns and renamed them for clarity and ease of use. You can find a full list of original column names and definitions here, and download the complete dataset — including both renamed and original columns — as the [Big Local News Federal Contracts dataset](https://biglocalnews.org/federal-contracts/) (accessible with a free account). The data was sourced from this [federal procurement portal](https://www.fpds.gov/fpdsng_cms/index.php/en/) using the code in [this GitHub repository](https://github.com/biglocalnews/sync-fed-contracts).
 

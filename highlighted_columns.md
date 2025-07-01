@@ -1,12 +1,12 @@
 # Highlighted columns
 Our CSV files include several columns that are either renamed fields in the original JSON data or have been derived from them. The dataset available through the streamlit application is limited to these columns. This document serves as a guide to those fields.
 
-Unless otherwise noted, quoted definitions are from the [FPDS Data Dictionary](https://www.fpds.gov/downloads/Version_1.5_specs/FPDS_DataDictionary_V1.5.pdf)
+Unless otherwise noted, quoted definitions are from the [FPDS Data Dictionary](https://www.fpds.gov/downloads/Version_1.5_specs/FPDS_DataDictionary_V1.5.pdf).
 
 ## contract_id
-1A Procurement Instrument Identifier (PIID): "The unique identifier for each contract, agreement or order"
+1A Procurement Instrument Identifier (PIID): "The unique identifier for each contract, agreement or order."
 
-The combination of contract_id, modification_number, and agency_id uniquely identifies a cancellation.
+The combination of contract_id, modification_number, and agency_id uniquely identifies a cancellation when those fields are not empty.
 
 Searchable in USASpending.gov as "Award ID." Also known as "awardContractID__PIID."
 
@@ -60,9 +60,9 @@ Deobligations are represented in the original data as negative numbers. We've in
 Also known as "UEILegalBusinessName."
 
 ## agency
-1F Agency Code: "Identifier used to link agency in FPDS to award information"
+1F Agency Code: "Identifier used to link agency in FPDS to award information."
 
-The agency that owns the *contract_id*, responsible for issuing the contract or award. Also known as "awardContractID__agencyID__name." Corresponds to "Agency" in USASpending.gov
+The agency that owns the *contract_id*, responsible for issuing the contract or award. Also known as "awardContractID__agencyID__name." Corresponds to "Agency" in USASpending.gov.
 
 ## department
 Derived from 4A Contracting Agency Code: "The code for the agency of the contracting office that executed or is otherwise responsible for the transaction."
@@ -98,15 +98,15 @@ Also known as "productOrServiceInformation__productOrServiceCode__description."
 Also known as "modified."
 
 ## vendor_attributes
-13 Entity Business Types: Each business type attribute has its own definition, we recommend looking at the data dictionary for details
+13 Entity Business Types: Each business type attribute has its own definition, we recommend looking at the data dictionary for details.
 
 ## filedate
-The Big Local News script gets a list of contract terminations daily and logs them in json files. 
+The Big Local News script gets a dataset of contract terminations daily in XML and saves them as JSON files. 
 
 This is the day that the file this cancellation appears in was written.
 
 ## filename
-The name of the json file on Big Local News' website that this modification appears in.
+The name of the JSON file inside Big Local News' ZIPped archive that this modification appears in.
 
 ## fpds_url
 A link to the contract ID searched on fpds.gov.

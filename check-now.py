@@ -18,9 +18,3 @@ try:
     )
 except:
     print("Failure with extract!")
-
-try:
-    os.system(f"{mypython} filter_for_dashboard.py data/convenience.csv")
-
-except:
-    print("Failure with filter!")

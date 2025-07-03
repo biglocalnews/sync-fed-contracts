@@ -12,6 +12,8 @@ from itertools import chain
 from fpds import fpdsRequest
 from tqdm import tqdm
 
+from utils import *
+
 yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
     "%Y/%m/%d"
 )
@@ -24,14 +26,28 @@ datadir = "data/"
 
 os.makedirs(datadir, exist_ok=True)
 
+# Force logging
+reload(logging)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s:%(message)s",
+    level=logging.DEBUG,
+    datefmt="%I:%M:%S",
+)
+logger = logging.getLogger()
+
+json_avail = list_json()
 
 def screen_files(localdate):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
     for reason in reasons:
-        filename = f"{datadir}/contracts-{filedate}_{reason}.json"
-        if not os.path.exists(filename):
+        filename = f"contracts-{filedate}_{reason}.json"
+        if filename not in json_avail:
             needfiles = True
+        # if not os.path.exists(filename):
+        #    needfiles = True
+    if needfiles:
+        logger.debug(f"Need files for {localdate}")
     return needfiles
 
 

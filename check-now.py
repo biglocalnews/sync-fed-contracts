@@ -17,4 +17,4 @@ try:
         log_level="debug",
     )
 except:
-    print("Failure!")
+    print("Failure with extract!")

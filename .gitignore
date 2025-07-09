@@ -1,7 +1,11 @@
+.DS_Store
 data/
 .ipynb_checkpoints
 disused/
 collected*.csv
 column_review.csv
 file_summaries.csv
-
+ignore-*.ipynb
+Untitled.ipynb
+__pycache__/
+dashboard/__pycache__/

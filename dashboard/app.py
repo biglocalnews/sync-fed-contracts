@@ -2,10 +2,10 @@
 Things to (possibly) update or add:
 - PullQuote style numbers
 - Add clickable links to the table that go to contract pages
-- Loading from remote CSV file(s)
+- Loading from remote CSV file(s)    # Implemented?
 - Optimize data loading with st.cache_data, where needed
 - Methodology page
-- Data dictionary page
+- Data dictionary page     # Implemented? Point to columns file once that goes live in main
 
 """
 
@@ -172,7 +172,7 @@ def filter_by_vendor_location(df, selected_country, selected_state, selected_cou
 st.title("Federal Contracts Terminated for Convenience")
 
 remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/convenience--limited_cols.csv"
-local_data = Path(__file__).parent / "../data/for_app/convenience--limited_cols.csv"
+local_data = Path(__file__).parent / "/data/convenience--limited_cols.csv"   # not used
 df = pandas.read_csv(remote_data)
 
 

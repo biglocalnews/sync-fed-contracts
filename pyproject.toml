@@ -8,4 +8,5 @@ dependencies = [
     "altair>=5.5.0",
     "pandas>=2.3.0",
     "streamlit>=1.45.1",
+    "google-cloud-storage>=3.2.0",
 ]

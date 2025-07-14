@@ -11,7 +11,9 @@ attrs==25.3.0
 blinker==1.9.0
     # via streamlit
 cachetools==5.5.2
-    # via streamlit
+    # via
+    #   google-auth
+    #   streamlit
 certifi==2025.4.26
     # via requests
 charset-normalizer==3.4.2
@@ -24,6 +26,27 @@ gitdb==4.0.12
     # via gitpython
 gitpython==3.1.44
     # via streamlit
+google-api-core==2.25.1
+    # via
+    #   google-cloud-core
+    #   google-cloud-storage
+google-auth==2.40.3
+    # via
+    #   google-api-core
+    #   google-cloud-core
+    #   google-cloud-storage
+google-cloud-core==2.4.3
+    # via google-cloud-storage
+google-cloud-storage==3.2.0
+    # via sync-fed-contracts
+google-crc32c==1.7.1
+    # via
+    #   google-cloud-storage
+    #   google-resumable-media
+google-resumable-media==2.7.2
+    # via google-cloud-storage
+googleapis-common-protos==1.70.0
+    # via google-api-core
 idna==3.10
     # via requests
 jinja2==3.1.6
@@ -53,10 +76,22 @@ pandas==2.3.0
     #   sync-fed-contracts
 pillow==11.2.1
     # via streamlit
+proto-plus==1.26.1
+    # via google-api-core
 protobuf==6.31.1
-    # via streamlit
+    # via
+    #   google-api-core
+    #   googleapis-common-protos
+    #   proto-plus
+    #   streamlit
 pyarrow==20.0.0
     # via streamlit
+pyasn1==0.6.1
+    # via
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.4.2
+    # via google-auth
 pydeck==0.9.1
     # via streamlit
 python-dateutil==2.9.0.post0
@@ -68,11 +103,16 @@ referencing==0.36.2
     #   jsonschema
     #   jsonschema-specifications
 requests==2.32.3
-    # via streamlit
+    # via
+    #   google-api-core
+    #   google-cloud-storage
+    #   streamlit
 rpds-py==0.25.1
     # via
     #   jsonschema
     #   referencing
+rsa==4.9.1
+    # via google-auth
 six==1.17.0
     # via python-dateutil
 smmap==5.0.2

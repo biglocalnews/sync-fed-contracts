@@ -12,6 +12,12 @@ The combination of contract_id, modification_number, and agency_id uniquely iden
 
 Searchable in USASpending.gov as "Award ID." Also known as "awardContractID\_\_PIID."
 
+## solicitation_id
+
+1E Solicitation Identifier: "Identifier used to link transactions in FPDS to solicitation information."
+
+Searchable in SAM.gov.
+
 ## modification_number
 
 1B Modification Number: "An identifier issued by an agency that uniquely identifies one modification for
@@ -73,19 +79,28 @@ The Federal Service Desk confirmed our understanding that some contract cancella
 
 Also known as "UEILegalBusinessName."
 
-## agency
+## admin_agency
 
 1F Agency Code: "Identifier used to link agency in FPDS to award information."
 
+Agencies will sometimes contract out the function of contracting or administration to agencies with superior procurement offices. We advise that you refer to **funding_agency** to determine the entity the work was actually performed for.
+
 The agency that owns the _contract_id_, responsible for issuing the contract or award. Also known as "awardContractID**agencyID**name." Corresponds to "Agency" in USASpending.gov.
 
-## department
+## contracting_agency_department
 
 Derived from 4A Contracting Agency Code: "The code for the agency of the contracting office that executed or is otherwise responsible for the transaction."
 
 The department overseeing the agency whose office is responsible for the modification.
 
 Also known as "contractingOfficeAgencyID\_\_departmentName."
+
+## funding_agency, funding_agency_department
+
+4C Program/Funding Agency Code: "The code for the agency that provided the preponderance of the funds obligated
+by this transaction."
+
+We advise that you refer to this field to determine the entity the work was actually performed for. Agencies will sometimes contract out the function of contracting to a **contracting_agency** with a superior procurement office. 
 
 ## contract_requirement
 

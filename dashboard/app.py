@@ -172,7 +172,7 @@ def filter_by_vendor_location(df, selected_country, selected_state, selected_cou
 st.title("Federal Contracts Terminated for Convenience")
 
 remote_data = "https://storage.googleapis.com/bln-data-public/terminated-fed-contracts/convenience--limited_cols.csv"
-local_data = Path(__file__).parent / "/data/convenience--limited_cols.csv"   # not used
+local_data = Path(__file__).parent / "../data/convenience--limited_cols.csv"  # not used
 df = pandas.read_csv(remote_data)
 
 
@@ -220,19 +220,37 @@ selected_vendor = st.sidebar.multiselect(
 )
 
 # Search department name -- multiselect from dropdown but type to search
-selected_department = st.sidebar.multiselect(
+
+all_depts = (
+    pandas.concat(
+        [df["contracting_agency_department"], df["funding_agency_department"]]
+    )
+    .dropna()
+    .unique()
+    .tolist()
+)
+selected_departments = st.sidebar.multiselect(
     "Filter by Department Name:",
-    options=sorted(df["department"].dropna().unique().tolist()),
+    options=sorted(all_depts),
     default=[],
 )
 
-if selected_department:
-    df = df[df["department"].isin(selected_department)]
+if selected_departments:
+    df = df[
+        (df["contracting_agency_department"].isin(selected_departments))
+        | (df["funding_agency_department"].isin(selected_departments))
+    ]
+
+# contracting_agency	contracting_agency_department	funding_agency	funding_agency_department
+
 
 # Search agency name -- multiselect from dropdown but type to search
-selected_agency = st.sidebar.multiselect(
+all_agencies = (
+    pandas.concat([df["admin_agency"], df["funding_agency"]]).dropna().unique().tolist()
+)
+selected_agencies = st.sidebar.multiselect(
     "Filter by Agency Name:",
-    options=sorted(df["agency"].dropna().unique().tolist()),
+    options=sorted(all_agencies),
     default=[],
 )
 
@@ -245,8 +263,11 @@ selected_keyword = st.sidebar.text_input(
 if selected_vendor:
     df = df[df["vendor"].isin(selected_vendor)]
 # Filter the DataFrame based on agency selection
-if selected_agency:
-    df = df[df["agency"].isin(selected_agency)]
+if selected_agencies:
+    df = df[
+        (df["admin_agency"].isin(selected_agencies))
+        | (df["funding_agency"].isin(selected_agencies))
+    ]
 # Filter the DataFrame based on keyword search
 if selected_keyword:
     keyword_lower = selected_keyword.lower()

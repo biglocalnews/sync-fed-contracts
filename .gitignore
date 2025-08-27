@@ -1,7 +1,7 @@
 .DS_Store
 data/
 .ipynb_checkpoints
-disused/
+# disused/
 collected*.csv
 column_review.csv
 file_summaries.csv
@@ -10,3 +10,12 @@ Untitled.ipynb
 __pycache__/
 dashboard/__pycache__/
 bln-gcs-key.json
+*.csv
+snapshots/
+/snapshots/*
+
+# Ignore all .env files
+.env.*
+
+# But don't ignore the example env files
+!.env.*.example

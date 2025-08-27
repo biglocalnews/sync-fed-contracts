@@ -37,6 +37,7 @@ logger = logging.getLogger()
 
 json_avail = list_json()
 
+
 def screen_files(localdate):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")

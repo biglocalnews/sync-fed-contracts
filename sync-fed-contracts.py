@@ -20,7 +20,7 @@ yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
 today = datetime.datetime.now().strftime("%Y/%m/%d")
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
 
-reasons = ["E", "F", "K", "N", "X"]
+reasons = ["0","E", "F", "K", "N", "X"]
 
 datadir = "data/"
 
@@ -73,7 +73,7 @@ async def fetch_a_date(localdate):
 
 if __name__ == "__main__":
     today = datetime.datetime.now()
-    start = datetime.datetime(2025, 1, 20)
+    start = datetime.datetime(2020, 1, 20)
     days_to_find = (today - start).days
     print(
         f"Reviewing records for {days_to_find:,} days. Any downloads will take some time."

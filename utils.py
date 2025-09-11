@@ -16,7 +16,7 @@ reload(logging)
 logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(message)s",
     level=logging.DEBUG,
-    datefmt="%I:%M:%S",
+    datefmt="%H:%M:%S",
 )
 logger = logging.getLogger()
 
@@ -35,7 +35,7 @@ def archive_json(deleteafterarchiving=True):
         message = (
             f"{len(duplicates):,} duplicates found, both loose JSON and in the ZIP. "
         )
-        message += f"You'll want to clear these out yourself. This program will neither replace nor "
+        message += "You'll want to clear these out yourself. This program will neither replace nor "
         message += "delete them."
         logger.debug(message)
     for duplicate in duplicates:

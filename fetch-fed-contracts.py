@@ -20,7 +20,13 @@ yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
 today = datetime.datetime.now().strftime("%Y/%m/%d")
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
 
-reasons = ["E", "F", "K", "N", "X"]
+reasons = {
+    "E": "Terminate for default",
+    "F": "Terminate for convenience",
+    "K": "Close out",
+    "N": "Legal contract cancellation",
+    "X": "Terminate for cause",
+}
 
 datadir = "data/"
 
@@ -31,7 +37,7 @@ reload(logging)
 logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(message)s",
     level=logging.DEBUG,
-    datefmt="%I:%M:%S",
+    datefmt="%H:%M:%S",
 )
 logger = logging.getLogger()
 

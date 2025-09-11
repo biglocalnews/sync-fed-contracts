@@ -4,15 +4,15 @@
 import asyncio
 import datetime
 import json
+import logging
 import os
-import socket
-from glob import glob
+from importlib import reload
 from itertools import chain
 
 from fpds import fpdsRequest
 from tqdm import tqdm
 
-from utils import *
+import utils
 
 yesterday = (datetime.datetime.now() - datetime.timedelta(hours=24)).strftime(
     "%Y/%m/%d"
@@ -41,10 +41,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
-json_avail = list_json()
 
+def screen_files(localdate: datetime):
+    """
+    Given a date, determine whether any files are missing.
 
-def screen_files(localdate):
+    Args:
+        localdate: datetime object
+    Returns:
+        needfiles: boolean showing whether any files were missing
+    """
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
     for reason in reasons:
@@ -58,7 +64,17 @@ def screen_files(localdate):
     return needfiles
 
 
-async def fetch_a_date(localdate):
+async def fetch_a_date(localdate: datetime):
+    """
+    Retrieve data files for a particular date.
+
+    Args:
+        localdate: datetime object showing desired date
+    Returns:
+        If no files needed, return value is None
+        If files are needed, ... I think it builds a dictionary by reasoncode with file-level contents as the value.
+        Why, yes, someone else wrote this and it's stable.
+    """
     needfiles = screen_files(localdate)
     if not needfiles:
         return None
@@ -78,7 +94,9 @@ async def fetch_a_date(localdate):
         }
 
 
-if __name__ == "__main__":
+def run_pipeline(environment):
+    global json_avail
+    json_avail = utils.list_json()  # Get list of available JSON.
     today = datetime.datetime.now()
     start = datetime.datetime(2025, 1, 20)
     days_to_find = (today - start).days

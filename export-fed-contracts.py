@@ -6,7 +6,7 @@ import datetime
 import json
 import logging
 import os
-from decimal import *
+import zipfile
 from glob import glob
 from importlib import reload
 
@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 import utils
 
-
 datadir = "data/"
+archivefile = f"{datadir}archived_json.zip"
 
 reasons = {
     "E": "Terminate for default",
@@ -44,7 +44,7 @@ logger = logging.getLogger()
 logger.setLevel("DEBUG")
 
 
-### Depending on the value of contract_type, one of these gets prefixed to many values. We want to merge these groups into one column.
+# Depending on the value of contract_type, one of these gets prefixed to many values. We want to merge these groups into one column.
 prefixes = {
     "IDV": "content__IDV__",
     "AWARD": "content__award__",
@@ -380,9 +380,10 @@ HIGHLIGHTED_COLUMNS_DICT = {
     "fpds_url": None,
 }
 
+
 def deeper_field_clean(text):
-    ## These are different from prefixes in that they don't create distinct columns that need to be consolidated
-    ## they're just junk text that, for our purposes, unnecessarily lengthens colu
+    # These are different from prefixes in that they don't create distinct columns that need to be consolidated
+    # they're just junk text that, for our purposes, unnecessarily lengthens column names.
     subprefixes = [
         "vendor__vendorSiteDetails__entityIdentifiers__vendorUEIInformation__",
         "vendor__vendorSiteDetails__typeOfEducationalEntity__",
@@ -524,7 +525,7 @@ def dedupe_by_contract_id(records):
     deduped_records = []
     for key in grouped:
         records_group = grouped[key]
-        if key[1] == None and key[2] == None:
+        if key[1] is None and key[2] is None:
             for line in records_group:
                 # Clean up the temporary field
                 del line["_parsed_date"]
@@ -596,7 +597,7 @@ def run_pipeline(environment):
     global jsonlist
     jsonlist = utils.list_archived_json()
 
-# Now, composite the JSONs into CSVs.
+    # Now, composite the JSONs into CSVs.
     extraheaders = []
     for item in shortwanted:
         extraheaders.append(deeper_field_clean(item))
@@ -621,7 +622,9 @@ def run_pipeline(environment):
                     for field in entry:
                         fieldshort = field.replace(prefix, "")
                         if fieldshort in shortwanted:
-                            localdict[deeper_field_clean(fieldshort)] = entry[field].strip()
+                            localdict[deeper_field_clean(fieldshort)] = entry[
+                                field
+                            ].strip()
 
                     localdict = add_county_details(localdict)
 
@@ -633,7 +636,9 @@ def run_pipeline(environment):
                     # Now we need to fill in some blanks at the beginning
 
                     localdict["contract_id"] = localdict["awardContractID__PIID"]
-                    localdict["solicitation_id"] = localdict["contractData__solicitationID"]
+                    localdict["solicitation_id"] = localdict[
+                        "contractData__solicitationID"
+                    ]
 
                     localdict["modification_number"] = localdict[
                         "awardContractID__modNumber"
@@ -650,7 +655,9 @@ def run_pipeline(environment):
                     localdict["performance_county"] = localdict[
                         "placeOfPerformanceZIPCode__county"
                     ]
-                    localdict["performance_zip9"] = localdict["placeOfPerformanceZIPCode"]
+                    localdict["performance_zip9"] = localdict[
+                        "placeOfPerformanceZIPCode"
+                    ]
 
                     localdict["vendor_country"] = localdict[
                         "vendorLocation__countryCode__name"
@@ -661,7 +668,9 @@ def run_pipeline(environment):
                         localdict["vendorLocation__ZIPCode"]
                     )
                     localdict["vendor_city"] = localdict["vendorLocation__city"]
-                    localdict["vendor_address"] = localdict["vendorLocation__streetAddress"]
+                    localdict["vendor_address"] = localdict[
+                        "vendorLocation__streetAddress"
+                    ]
                     localdict["vendor_phone"] = localdict["vendorLocation__phoneNo"]
                     localdict["date_cancelled"] = localdict[
                         "relevantContractDates__signedDate"
@@ -670,7 +679,9 @@ def run_pipeline(environment):
                         localdict["dollarValues__obligatedAmount"]
                     )  # Invert
                     localdict["vendor"] = localdict["UEILegalBusinessName"]
-                    localdict["admin_agency"] = localdict["awardContractID__agencyID__name"]
+                    localdict["admin_agency"] = localdict[
+                        "awardContractID__agencyID__name"
+                    ]
                     localdict["contracting_agency_department"] = localdict[
                         "contractingOfficeAgencyID__departmentName"
                     ]
@@ -707,7 +718,9 @@ def run_pipeline(environment):
         if locallist:  # Make sure we have data, then write the data file
             with open(filepath, "w", encoding="utf-8", newline="") as outfile:
                 writer = csv.writer(outfile)
-                writer.writerow(list(locallist[0].keys()))  # Use first record for headers
+                writer.writerow(
+                    list(locallist[0].keys())
+                )  # Use first record for headers
                 for line in locallist:
                     writer.writerow(list(line.values()))
                 logger.debug(f"Wrote {filepath}")
@@ -737,4 +750,3 @@ def run_pipeline(environment):
         logger.debug("We're in production")
         send_files()
         send_dashboard_data()
-

@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import csv
 import datetime
 import json
@@ -11,20 +8,15 @@ import logging
 import os
 from decimal import *
 from glob import glob
+from importlib import reload
 
 from bln.client import Client
 from tqdm import tqdm
 
-from utils import *
-
-# In[ ]:
+import utils
 
 
 datadir = "data/"
-
-
-# In[ ]:
-
 
 reasons = {
     "E": "Terminate for default",
@@ -42,43 +34,23 @@ reasons_simplified = {
     "X": "for_cause",
 }
 
-
-# In[ ]:
-
-
-from importlib import reload
-
 reload(logging)
 logging.basicConfig(
     format="%(asctime)s %(levelname)s:%(message)s",
     level=logging.DEBUG,
-    datefmt="%I:%M:%S",
+    datefmt="%H:%M:%S",
 )
 logger = logging.getLogger()
 logger.setLevel("DEBUG")
 
 
-# In[ ]:
-
-
-archive_json(deleteafterarchiving=True)  # ZIP stuff up!
-
-
-# In[ ]:
-
-
 ### Depending on the value of contract_type, one of these gets prefixed to many values. We want to merge these groups into one column.
-
 prefixes = {
     "IDV": "content__IDV__",
     "AWARD": "content__award__",
     "OTHERTRANSACTIONAWARD": "content__OtherTransactionAward__contractDetail__",
     "OTHERTRANSACTIONIDV": "content__OtherTransactionIDV__contractDetail__",
 }
-
-
-# In[ ]:
-
 
 roughshortwanted = """
 title
@@ -278,246 +250,13 @@ vendor__vendorSiteDetails__vendorCertifications__isSBACertifiedHUBZone
 vendor__vendorSiteDetails__vendorCertifications__isSBACertified8AJointVenture
 
 """
+
 shortwanted = []
 for shortthing in roughshortwanted.splitlines():
     shorterthing = shortthing.split("#")[0].strip()
     if len(shorterthing) > 3:  # Drop commented-out rows, drop comments
         shortwanted.append(shorterthing)
 
-
-# In[ ]:
-
-
-def deeper_field_clean(text):
-    ## These are different from prefixes in that they don't create distinct columns that need to be consolidated
-    ## they're just junk text that, for our purposes, unnecessarily lengthens colu
-    subprefixes = [
-        "vendor__vendorSiteDetails__entityIdentifiers__vendorUEIInformation__",
-        "vendor__vendorSiteDetails__typeOfEducationalEntity__",
-        "vendor__vendorSiteDetails__vendorCertifications__",
-        "vendor__vendorSiteDetails__vendorOrganizationFactors__",
-        "vendor__vendorSiteDetails__typeOfGovernmentEntity__",
-        "vendor__vendorSiteDetails__vendorLineOfBusiness__",
-        "vendor__vendorSiteDetails__vendorBusinessTypes__businessOrOrganizationType__",
-        "vendor__vendorSiteDetails__vendorBusinessTypes__localGovernment__",
-        "vendor__vendorSiteDetails__vendorBusinessTypes__federalGovernment__",
-        "vendor__vendorSiteDetails__vendorBusinessTypes__",
-        "vendor__vendorSiteDetails__vendorSocioEconomicIndicators__minorityOwned__",
-        "content__award__vendor__vendorHeader__",
-        "placeOfPerformance__",
-        # Deeper cuts below
-        "vendor__vendorSiteDetails__vendorSocioEconomicIndicators__",
-        "vendor__vendorSiteDetails__",
-        "awardID__",
-        "purchaserInformation__",
-        "vendor__vendorHeader__",
-    ]
-    for subprefix in subprefixes:
-        text = text.replace(subprefix, "")
-    return text
-
-
-# In[ ]:
-
-
-def in_production():
-    if "GITHUB_RUN_ID" in os.environ or socket.gethostname() in [
-        # "mikelight",
-        "racknerd-26f61a",
-    ]:
-        return True
-    else:
-        return False
-
-
-# In[ ]:
-
-
-def send_files():
-    # Start by seeing what we have
-    rawfilenames = list(glob(datadir + "*"))
-    basefilenames = []
-    for rawfilename in rawfilenames:
-        basefilename = rawfilename.replace("\\", "/").replace(datadir, "")
-        basefilenames.append(basefilename)
-
-    bln_api = os.environ["BLN_API_TOKEN"]
-    bln = Client(bln_api)
-    project = bln.get_project_by_name("Federal contract cancellations")
-    project_id = project["id"]
-
-    files_to_send = []
-    # Get all the files in the project.
-    bln_files = {}
-    for f in project["files"]:
-        bln_files[f["name"]] = f["updatedAt"]
-
-    for basefilename in basefilenames:
-        if (
-            basefilename not in bln_files
-            or basefilename.endswith(".csv")
-            or basefilename.endswith(".zip")
-        ):
-            files_to_send.append(basefilename)
-
-    logger.debug(f"{len(bln_files):,} files found on Big Local News.")
-    logger.debug(f"{len(files_to_send):,} files to send to Big Local News.")
-    if len(files_to_send) == 0:
-        pass
-    else:
-        project_id = project["id"]
-        for file_to_send in tqdm(files_to_send):
-            bln.upload_file(project_id, datadir + file_to_send)
-    return
-
-
-# In[ ]:
-
-
-def send_dashboard_data():
-    """Send limited-column data to Google Cloud Storage for dashboard
-
-    Arguments:
-        None
-    Returns:
-        None
-    Uses:
-        bln-gcs-key.json secret file
-    """
-    from google.cloud import storage
-    from google.oauth2 import service_account
-
-    bucket_name = "bln-data-public"
-    targetfile = "terminated-fed-contracts/convenience--limited_cols.csv"
-    localfile = "data/convenience--limited_cols.csv"
-    service_account_file = "bln-gcs-key.json"
-
-    credentials = service_account.Credentials.from_service_account_file(
-        service_account_file
-    )
-    storage_client = storage.Client(credentials=credentials)
-    bucket = storage_client.bucket(bucket_name)
-
-    blob = bucket.blob(targetfile)
-    blob.upload_from_filename(localfile)
-
-    return
-
-
-# In[ ]:
-
-
-def get_zip_lookup():
-    """Build a ZIP/ZCTA lookup table, if needed
-
-    Arguments:
-        None
-    Returns:
-        global dictionary named ziplookup
-    Uses:
-        zip-lookup.csv from mable-raw.csv via parse-zips.ipynb
-    """
-    if "ziplookup" in globals():
-        pass  # ZIP lookup table already initialized
-    else:
-        logger.debug("ZIP lookup table being initialized")
-        global ziplookup
-        ziplookup = {}
-        with open("zip-lookup.csv", "r", encoding="utf-8") as infile:
-            reader = csv.DictReader(infile)
-            for row in reader:
-                ziplookup[row["zip_code"]] = row
-    return ()
-
-
-# In[ ]:
-
-
-def dedupe_by_contract_id(records):
-    """Keep only the most recent record for each unique contract combination"""
-    from collections import defaultdict
-
-    grouped = defaultdict(list)
-
-    for record in records:
-        # Create the unique key from the three contract ID fields
-        key = (
-            record.get("awardContractID__agencyID"),
-            record.get("awardContractID__PIID"),
-            record.get("awardContractID__modNumber"),
-        )
-
-        # Parse the date for comparison
-        record["_parsed_date"] = datetime.datetime.strptime(
-            record["modified"], "%Y-%m-%d %H:%M:%S"
-        )
-        grouped[key].append(record)
-
-    # Keep only the most recent record from each group
-    deduped_records = []
-    for key in grouped:
-        records_group = grouped[key]
-        if key[1] == None and key[2] == None:
-            for line in records_group:
-                # Clean up the temporary field
-                del line["_parsed_date"]
-                deduped_records.append(line)
-        else:
-            most_recent = max(records_group, key=lambda x: x["_parsed_date"])
-            # Clean up the temporary field
-            del most_recent["_parsed_date"]
-            deduped_records.append(most_recent)
-
-    return deduped_records
-
-
-# In[ ]:
-
-
-def add_county_details(row: dict):
-    """Take a list returned from the API or read from a CSV, and append geographic details.
-
-    Arguments:
-        row, a dictionary
-    Returns:
-        row, still a dictionary
-    """
-    get_zip_lookup()  # Read in table ## why are we doing this every single row?
-    if (
-        "geo_fips" not in row or row["geo_fips"] == "Unknown"
-    ):  # If we need to do a lookup
-        if not row["placeOfPerformanceZIPCode"]:
-            for item in ["geo_fips", "geo_county_name", "geo_zip_name"]:
-                row[item] = "Unknown"
-        else:
-            rowzip = row["placeOfPerformanceZIPCode"][
-                0:5
-            ]  # Lose the extension for 9-digit ZIP codes
-            if rowzip not in ziplookup:  # If we can't look up
-                for item in ["geo_fips", "geo_county_name", "geo_zip_name"]:
-                    row[item] = "Unknown"
-            else:  # We need to look up, and we can look up
-                row["geo_fips"] = ziplookup[rowzip]["zip_fips"]
-                row["geo_county_name"] = ziplookup[rowzip]["zip_county_name"]
-                row["geo_zip_name"] = ziplookup[rowzip]["zip_place_name"]
-    return row
-
-
-def county_from_zip(zip9):
-    if zip9 is None:
-        return "Unknown"
-    zip5 = zip9[:5]
-    if zip5 in ziplookup:
-        loc_data = ziplookup[zip5]
-        geo_county_name = loc_data["zip_county_name"]
-        return geo_county_name[:-3]  # Truncating out the state code
-    return "Unknown"
-
-
-# In[ ]:
-
-
-## Eric's categories -- I'll review them
 VENDOR_ATTR_COLS = [
     "isAmericanIndianOwned",
     "isIndianTribe",
@@ -608,20 +347,6 @@ VENDOR_ATTR_COLS = [
     "isSBACertified8AJointVenture",
 ]
 
-
-def roll_up_flags(row, flag_ls):
-    compiled_flags = []
-    for flag in flag_ls:
-        if row[flag] == "true":
-            compiled_flags.append(flag)
-    return compiled_flags
-
-
-# In[ ]:
-
-
-# On DATE, VENDOR lost a AMOUNT-dollar contract with AGENCY, DEPARTMENT for DESCRIPTION
-
 HIGHLIGHTED_COLUMNS_DICT = {
     "contract_id": None,
     "solicitation_id": None,
@@ -655,170 +380,361 @@ HIGHLIGHTED_COLUMNS_DICT = {
     "fpds_url": None,
 }
 
-# HIGHLIGHTED_COLUMNS_DICT.keys()
+def deeper_field_clean(text):
+    ## These are different from prefixes in that they don't create distinct columns that need to be consolidated
+    ## they're just junk text that, for our purposes, unnecessarily lengthens colu
+    subprefixes = [
+        "vendor__vendorSiteDetails__entityIdentifiers__vendorUEIInformation__",
+        "vendor__vendorSiteDetails__typeOfEducationalEntity__",
+        "vendor__vendorSiteDetails__vendorCertifications__",
+        "vendor__vendorSiteDetails__vendorOrganizationFactors__",
+        "vendor__vendorSiteDetails__typeOfGovernmentEntity__",
+        "vendor__vendorSiteDetails__vendorLineOfBusiness__",
+        "vendor__vendorSiteDetails__vendorBusinessTypes__businessOrOrganizationType__",
+        "vendor__vendorSiteDetails__vendorBusinessTypes__localGovernment__",
+        "vendor__vendorSiteDetails__vendorBusinessTypes__federalGovernment__",
+        "vendor__vendorSiteDetails__vendorBusinessTypes__",
+        "vendor__vendorSiteDetails__vendorSocioEconomicIndicators__minorityOwned__",
+        "content__award__vendor__vendorHeader__",
+        "placeOfPerformance__",
+        # Deeper cuts below
+        "vendor__vendorSiteDetails__vendorSocioEconomicIndicators__",
+        "vendor__vendorSiteDetails__",
+        "awardID__",
+        "purchaserInformation__",
+        "vendor__vendorHeader__",
+    ]
+    for subprefix in subprefixes:
+        text = text.replace(subprefix, "")
+    return text
 
 
-# In[ ]:
+def send_files():
+    # Start by seeing what we have
+    rawfilenames = list(glob(datadir + "*"))
+    basefilenames = []
+    for rawfilename in rawfilenames:
+        basefilename = rawfilename.replace("\\", "/").replace(datadir, "")
+        basefilenames.append(basefilename)
+
+    bln_api = os.environ["BLN_API_TOKEN"]
+    bln = Client(bln_api)
+    project = bln.get_project_by_name("Federal contract cancellations")
+    project_id = project["id"]
+
+    files_to_send = []
+    # Get all the files in the project.
+    bln_files = {}
+    for f in project["files"]:
+        bln_files[f["name"]] = f["updatedAt"]
+
+    for basefilename in basefilenames:
+        if (
+            basefilename not in bln_files
+            or basefilename.endswith(".csv")
+            or basefilename.endswith(".zip")
+        ):
+            files_to_send.append(basefilename)
+
+    logger.debug(f"{len(bln_files):,} files found on Big Local News.")
+    logger.debug(f"{len(files_to_send):,} files to send to Big Local News.")
+    if len(files_to_send) == 0:
+        pass
+    else:
+        project_id = project["id"]
+        for file_to_send in tqdm(files_to_send):
+            bln.upload_file(project_id, datadir + file_to_send)
+    return
+
+
+def send_dashboard_data():
+    """Send limited-column data to Google Cloud Storage for dashboard
+
+    Arguments:
+        None
+    Returns:
+        None
+    Uses:
+        bln-gcs-key.json secret file
+    """
+    from google.cloud import storage
+    from google.oauth2 import service_account
+
+    bucket_name = "bln-data-public"
+    targetfile = "terminated-fed-contracts/convenience--limited_cols.csv"
+    localfile = "data/convenience--limited_cols.csv"
+    service_account_file = "bln-gcs-key.json"
+
+    credentials = service_account.Credentials.from_service_account_file(
+        service_account_file
+    )
+    storage_client = storage.Client(credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+
+    blob = bucket.blob(targetfile)
+    blob.upload_from_filename(localfile)
+
+    return
+
+
+def get_zip_lookup():
+    """Build a ZIP/ZCTA lookup table, if needed
+
+    Arguments:
+        None
+    Returns:
+        global dictionary named ziplookup
+    Uses:
+        zip-lookup.csv from mable-raw.csv via parse-zips.ipynb
+    """
+    if "ziplookup" in globals():
+        pass  # ZIP lookup table already initialized
+    else:
+        logger.debug("ZIP lookup table being initialized")
+        global ziplookup
+        ziplookup = {}
+        with open("zip-lookup.csv", "r", encoding="utf-8") as infile:
+            reader = csv.DictReader(infile)
+            for row in reader:
+                ziplookup[row["zip_code"]] = row
+    return ()
+
+
+def dedupe_by_contract_id(records):
+    """Keep only the most recent record for each unique contract combination"""
+    from collections import defaultdict
+
+    grouped = defaultdict(list)
+
+    for record in records:
+        # Create the unique key from the three contract ID fields
+        key = (
+            record.get("awardContractID__agencyID"),
+            record.get("awardContractID__PIID"),
+            record.get("awardContractID__modNumber"),
+        )
+
+        # Parse the date for comparison
+        record["_parsed_date"] = datetime.datetime.strptime(
+            record["modified"], "%Y-%m-%d %H:%M:%S"
+        )
+        grouped[key].append(record)
+
+    # Keep only the most recent record from each group
+    deduped_records = []
+    for key in grouped:
+        records_group = grouped[key]
+        if key[1] == None and key[2] == None:
+            for line in records_group:
+                # Clean up the temporary field
+                del line["_parsed_date"]
+                deduped_records.append(line)
+        else:
+            most_recent = max(records_group, key=lambda x: x["_parsed_date"])
+            # Clean up the temporary field
+            del most_recent["_parsed_date"]
+            deduped_records.append(most_recent)
+
+    return deduped_records
+
+
+def add_county_details(row: dict):
+    """Take a list returned from the API or read from a CSV, and append geographic details.
+
+    Arguments:
+        row, a dictionary
+    Returns:
+        row, still a dictionary
+    """
+    get_zip_lookup()  # Read in table ## why are we doing this every single row?
+    if (
+        "geo_fips" not in row or row["geo_fips"] == "Unknown"
+    ):  # If we need to do a lookup
+        if not row["placeOfPerformanceZIPCode"]:
+            for item in ["geo_fips", "geo_county_name", "geo_zip_name"]:
+                row[item] = "Unknown"
+        else:
+            rowzip = row["placeOfPerformanceZIPCode"][
+                0:5
+            ]  # Lose the extension for 9-digit ZIP codes
+            if rowzip not in ziplookup:  # If we can't look up
+                for item in ["geo_fips", "geo_county_name", "geo_zip_name"]:
+                    row[item] = "Unknown"
+            else:  # We need to look up, and we can look up
+                row["geo_fips"] = ziplookup[rowzip]["zip_fips"]
+                row["geo_county_name"] = ziplookup[rowzip]["zip_county_name"]
+                row["geo_zip_name"] = ziplookup[rowzip]["zip_place_name"]
+    return row
+
+
+def county_from_zip(zip9):
+    if zip9 is None:
+        return "Unknown"
+    zip5 = zip9[:5]
+    if zip5 in ziplookup:
+        loc_data = ziplookup[zip5]
+        geo_county_name = loc_data["zip_county_name"]
+        return geo_county_name[:-3]  # Truncating out the state code
+    return "Unknown"
+
+
+def roll_up_flags(row, flag_ls):
+    compiled_flags = []
+    for flag in flag_ls:
+        if row[flag] == "true":
+            compiled_flags.append(flag)
+    return compiled_flags
 
 
 def invert(val):
     return float(val) * -1
 
 
-# In[ ]:
+def run_pipeline(environment):
+    utils.archive_json(deleteafterarchiving=True)  # ZIP stuff up!
 
+    global jsonlist
+    jsonlist = utils.list_archived_json()
 
 # Now, composite the JSONs into CSVs.
+    extraheaders = []
+    for item in shortwanted:
+        extraheaders.append(deeper_field_clean(item))
+    for reason in reasons:
+        locallist = []
+        with zipfile.ZipFile(archivefile, "r") as myzip:
+            localfiles = [item for item in jsonlist if item.endswith(f"{reason}.json")]
+            for basefilename in tqdm(localfiles, desc=f"code {reason}"):
+                with myzip.open(basefilename) as myfile:
+                    rawjson = json.loads(myfile.read())
+                filedate = basefilename.split("contracts-")[-1].split("_")[0]
+                for entry in rawjson:
+                    localdict = HIGHLIGHTED_COLUMNS_DICT.copy()
+                    localdict["filedate"] = filedate
+                    localdict["reason_code"] = reason
+                    localdict["reason"] = f"{reason}: {reasons[reason]}"
+                    localdict["filename"] = basefilename
 
-jsonlist = list_archived_json()
+                    prefix = prefixes[entry["contract_type"]]
+                    for item in extraheaders:
+                        localdict[item] = None
+                    for field in entry:
+                        fieldshort = field.replace(prefix, "")
+                        if fieldshort in shortwanted:
+                            localdict[deeper_field_clean(fieldshort)] = entry[field].strip()
 
-extraheaders = []
-for item in shortwanted:
-    extraheaders.append(deeper_field_clean(item))
-for reason in reasons:
-    locallist = []
-    with zipfile.ZipFile(archivefile, "r") as myzip:
-        localfiles = [item for item in jsonlist if item.endswith(f"{reason}.json")]
-        for basefilename in tqdm(localfiles, desc=f"code {reason}"):
-            with myzip.open(basefilename) as myfile:
-                rawjson = json.loads(myfile.read())
-            filedate = basefilename.split("contracts-")[-1].split("_")[0]
-            for entry in rawjson:
-                localdict = HIGHLIGHTED_COLUMNS_DICT.copy()
-                localdict["filedate"] = filedate
-                localdict["reason_code"] = reason
-                localdict["reason"] = f"{reason}: {reasons[reason]}"
-                localdict["filename"] = basefilename
+                    localdict = add_county_details(localdict)
 
-                prefix = prefixes[entry["contract_type"]]
-                for item in extraheaders:
-                    localdict[item] = None
-                for field in entry:
-                    fieldshort = field.replace(prefix, "")
-                    if fieldshort in shortwanted:
-                        localdict[deeper_field_clean(fieldshort)] = entry[field].strip()
+                    localdict["vendor_attributes"] = roll_up_flags(
+                        localdict, VENDOR_ATTR_COLS
+                    )
+                    #            localdict["is_nonprofit"] = len(roll_up_flags(localdict,NON_PROFIT_COLS))>0
 
-                localdict = add_county_details(localdict)
+                    # Now we need to fill in some blanks at the beginning
 
-                localdict["vendor_attributes"] = roll_up_flags(
-                    localdict, VENDOR_ATTR_COLS
-                )
-                #            localdict["is_nonprofit"] = len(roll_up_flags(localdict,NON_PROFIT_COLS))>0
+                    localdict["contract_id"] = localdict["awardContractID__PIID"]
+                    localdict["solicitation_id"] = localdict["contractData__solicitationID"]
 
-                # Now we need to fill in some blanks at the beginning
+                    localdict["modification_number"] = localdict[
+                        "awardContractID__modNumber"
+                    ]
+                    localdict["performance_country"] = localdict[
+                        "principalPlaceOfPerformance__countryCode__name"
+                    ]
+                    localdict["performance_state"] = localdict[
+                        "principalPlaceOfPerformance__stateCode"
+                    ]
 
-                localdict["contract_id"] = localdict["awardContractID__PIID"]
-                localdict["solicitation_id"] = localdict["contractData__solicitationID"]
+                    # We might want to replace this with localdict["geo_county_name"] at some point
+                    # but we should confirm why we're overriding the underlying data
+                    localdict["performance_county"] = localdict[
+                        "placeOfPerformanceZIPCode__county"
+                    ]
+                    localdict["performance_zip9"] = localdict["placeOfPerformanceZIPCode"]
 
-                localdict["modification_number"] = localdict[
-                    "awardContractID__modNumber"
-                ]
-                localdict["performance_country"] = localdict[
-                    "principalPlaceOfPerformance__countryCode__name"
-                ]
-                localdict["performance_state"] = localdict[
-                    "principalPlaceOfPerformance__stateCode"
-                ]
+                    localdict["vendor_country"] = localdict[
+                        "vendorLocation__countryCode__name"
+                    ]
+                    localdict["vendor_state"] = localdict["vendorLocation__state"]
+                    localdict["vendor_zip9"] = localdict["vendorLocation__ZIPCode"]
+                    localdict["vendor_county"] = county_from_zip(
+                        localdict["vendorLocation__ZIPCode"]
+                    )
+                    localdict["vendor_city"] = localdict["vendorLocation__city"]
+                    localdict["vendor_address"] = localdict["vendorLocation__streetAddress"]
+                    localdict["vendor_phone"] = localdict["vendorLocation__phoneNo"]
+                    localdict["date_cancelled"] = localdict[
+                        "relevantContractDates__signedDate"
+                    ]
+                    localdict["amount_cancelled"] = invert(
+                        localdict["dollarValues__obligatedAmount"]
+                    )  # Invert
+                    localdict["vendor"] = localdict["UEILegalBusinessName"]
+                    localdict["admin_agency"] = localdict["awardContractID__agencyID__name"]
+                    localdict["contracting_agency_department"] = localdict[
+                        "contractingOfficeAgencyID__departmentName"
+                    ]
 
-                # We might want to replace this with localdict["geo_county_name"] at some point
-                # but we should confirm why we're overriding the underlying data
-                localdict["performance_county"] = localdict[
-                    "placeOfPerformanceZIPCode__county"
-                ]
-                localdict["performance_zip9"] = localdict["placeOfPerformanceZIPCode"]
+                    localdict["funding_agency"] = localdict[
+                        "fundingRequestingAgencyID__name"
+                    ]
+                    localdict["funding_agency_department"] = localdict[
+                        "fundingRequestingAgencyID__departmentName"
+                    ]
 
-                localdict["vendor_country"] = localdict[
-                    "vendorLocation__countryCode__name"
-                ]
-                localdict["vendor_state"] = localdict["vendorLocation__state"]
-                localdict["vendor_zip9"] = localdict["vendorLocation__ZIPCode"]
-                localdict["vendor_county"] = county_from_zip(
-                    localdict["vendorLocation__ZIPCode"]
-                )
-                localdict["vendor_city"] = localdict["vendorLocation__city"]
-                localdict["vendor_address"] = localdict["vendorLocation__streetAddress"]
-                localdict["vendor_phone"] = localdict["vendorLocation__phoneNo"]
-                localdict["date_cancelled"] = localdict[
-                    "relevantContractDates__signedDate"
-                ]
-                localdict["amount_cancelled"] = invert(
-                    localdict["dollarValues__obligatedAmount"]
-                )  # Invert
-                localdict["vendor"] = localdict["UEILegalBusinessName"]
-                localdict["admin_agency"] = localdict["awardContractID__agencyID__name"]
-                localdict["contracting_agency_department"] = localdict[
-                    "contractingOfficeAgencyID__departmentName"
-                ]
+                    localdict["fpds_url"] = localdict["link__href"]
+                    localdict["contract_requirement"] = localdict[
+                        "contractData__descriptionOfContractRequirement"
+                    ]
+                    localdict["product_or_service_description"] = localdict[
+                        "productOrServiceInformation__productOrServiceCode__description"
+                    ]
+                    localdict["last_updated"] = localdict["modified"]
+                    locallist.append(localdict)
 
-                localdict["funding_agency"] = localdict[
-                    "fundingRequestingAgencyID__name"
-                ]
-                localdict["funding_agency_department"] = localdict[
-                    "fundingRequestingAgencyID__departmentName"
-                ]
+        # Now we need to deduplicate by contract ID
+        logger.debug(f"Before deduping: {len(locallist):,} records")
+        locallist = dedupe_by_contract_id(locallist)
+        logger.debug(f"After deduping: {len(locallist):,} records")
 
-                localdict["fpds_url"] = localdict["link__href"]
-                localdict["contract_requirement"] = localdict[
-                    "contractData__descriptionOfContractRequirement"
-                ]
-                localdict["product_or_service_description"] = localdict[
-                    "productOrServiceInformation__productOrServiceCode__description"
-                ]
-                localdict["last_updated"] = localdict["modified"]
-                locallist.append(localdict)
+        # Let's get some basic sorting in here
+        locallist = sorted(locallist, key=lambda x: (x["filedate"]), reverse=True)
 
-    # Now we need to deduplicate by contract ID
-    logger.debug(f"Before deduping: {len(locallist):,} records")
-    locallist = dedupe_by_contract_id(locallist)
-    logger.debug(f"After deduping: {len(locallist):,} records")
-
-    # Let's get some basic sorting in here
-    locallist = sorted(locallist, key=lambda x: (x["filedate"]), reverse=True)
-
-    filepath = f"{datadir}collected_{reason}.csv"
-    reason_str = reasons_simplified[reason]
-    filepath = f"{datadir}{reason_str}.csv"
-    logger.debug(f"Writing {filepath}")
-    if locallist:  # Make sure we have data, then write the data file
-        with open(filepath, "w", encoding="utf-8", newline="") as outfile:
-            writer = csv.writer(outfile)
-            writer.writerow(list(locallist[0].keys()))  # Use first record for headers
-            for line in locallist:
-                writer.writerow(list(line.values()))
-            logger.debug(f"Wrote {filepath}")
-
-    if reason == "F":  # Process limited fields/columnss/keys
-        limitedfile = f"{datadir}{reason_str}--limited_cols.csv"
-        logger.debug(f"Writing to {limitedfile}")
-
-        # Limit each dict in a list to specific keys/fields/columns
-        limited_locallist = []
-        limited_cols = list(HIGHLIGHTED_COLUMNS_DICT.keys()) + ["vendor_attributes"]
-
-        for row in locallist:
-            limited_locallist.append({k: row[k] for k in limited_cols if k in row})
-        with open(limitedfile, "w", encoding="utf-8", newline="") as outfile:
-            if locallist:
+        filepath = f"{datadir}collected_{reason}.csv"
+        reason_str = reasons_simplified[reason]
+        filepath = f"{datadir}{reason_str}.csv"
+        logger.debug(f"Writing {filepath}")
+        if locallist:  # Make sure we have data, then write the data file
+            with open(filepath, "w", encoding="utf-8", newline="") as outfile:
                 writer = csv.writer(outfile)
-                writer.writerow(list(limited_locallist[0].keys()))
-                for row in limited_locallist:
-                    writer.writerow(list(row.values()))
-        logger.debug(f"Wrote {limitedfile}")
+                writer.writerow(list(locallist[0].keys()))  # Use first record for headers
+                for line in locallist:
+                    writer.writerow(list(line.values()))
+                logger.debug(f"Wrote {filepath}")
 
-    locallist = None
+        if reason == "F":  # Process limited fields/columnss/keys
+            limitedfile = f"{datadir}{reason_str}--limited_cols.csv"
+            logger.debug(f"Writing to {limitedfile}")
 
+            # Limit each dict in a list to specific keys/fields/columns
+            limited_locallist = []
+            limited_cols = list(HIGHLIGHTED_COLUMNS_DICT.keys()) + ["vendor_attributes"]
 
-# In[ ]:
+            for row in locallist:
+                limited_locallist.append({k: row[k] for k in limited_cols if k in row})
+            with open(limitedfile, "w", encoding="utf-8", newline="") as outfile:
+                if locallist:
+                    writer = csv.writer(outfile)
+                    writer.writerow(list(limited_locallist[0].keys()))
+                    for row in limited_locallist:
+                        writer.writerow(list(row.values()))
+            logger.debug(f"Wrote {limitedfile}")
 
+        locallist = None
 
-# We should only run this if it's in production.
-if in_production:
-    logger.debug("We're in production")
-    send_files()
-    send_dashboard_data()
+    # We should only run this if it's in production.
+    if in_production:
+        logger.debug("We're in production")
+        send_files()
+        send_dashboard_data()
 
-
-# In[ ]:
-
-
-# In[ ]:

@@ -333,9 +333,6 @@ st.info(
 
 # st.altair_chart(chart, use_container_width=True)
 
-# df = df.style.format({
-#     "amount_cancelled": "${:,.2f}"
-# })
 
 st.dataframe(df, column_config={
     "amount_cancelled": st.column_config.NumberColumn(format="$ %.2f")

@@ -16,6 +16,10 @@ from pathlib import Path
 import pandas
 import streamlit as st
 
+# We're styling the currency column of the displayed df, so this limit comes into play
+# Might want to adjust how we handle this as the number of rows grows over time
+# pandas.set_option("styler.render.max_elements", 10**7)
+
 DEFAULT_START_DATE = pandas.to_datetime(
     "01-20-2025"
 )  # Default start date for the date range slider
@@ -286,7 +290,7 @@ This dashboard lets you explore and download data about canceled federal contrac
 )
 
 st.info(
-    """[Data dictionary](https://github.com/biglocalnews/sync-fed-contracts/blob/app/highlighted_columns.md)"""
+    """[Data dictionary](https://github.com/biglocalnews/sync-fed-contracts/blob/main/highlighted_columns.md)"""
 )
 
 # # Filter the DataFrame based on selection
@@ -330,8 +334,9 @@ st.info(
 # st.altair_chart(chart, use_container_width=True)
 
 
-st.dataframe(df)
-
+st.dataframe(df, column_config={
+    "amount_cancelled": st.column_config.NumberColumn(format="$ %.2f")
+})
 
 st.markdown(
     """

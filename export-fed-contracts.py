@@ -745,8 +745,6 @@ def run_pipeline(environment):
 
         locallist = None
 
-    # We should only run this if it's in production.
-    if in_production:
-        logger.debug("We're in production")
-        send_files()
-        send_dashboard_data()
+    logger.debug("We're in production")
+    send_files()
+    send_dashboard_data()

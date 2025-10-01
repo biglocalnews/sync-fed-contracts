@@ -69,7 +69,7 @@ idna==3.10
     #   requests
     #   yarl
 jinja2==3.1.6
-    # via
+    # viauv pip compile pyproject.toml -o requirements.txt
     #   altair
     #   pydeck
 jsonschema==4.25.1
@@ -111,7 +111,7 @@ protobuf==6.32.1
     #   googleapis-common-protos
     #   proto-plus
     #   streamlit
-pyarrow==21.0.0
+##### pyarrow==21.0.0    # Not available for arm64 yet
     # via streamlit
 pyasn1==0.6.1
     # via
@@ -144,7 +144,7 @@ six==1.17.0
     # via python-dateutil
 smmap==5.0.2
     # via gitdb
-streamlit==1.50.0
+# streamlit==1.50.0     # Dependency of pyarrow not available on arm64
     # via sync-fed-contracts (pyproject.toml)
 tenacity==9.1.2
     # via streamlit

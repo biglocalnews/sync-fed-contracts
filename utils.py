@@ -6,7 +6,7 @@ from glob import glob
 from importlib import reload
 from pathlib import Path
 
-import dotenv
+from dotenv import load_dotenv
 from tqdm import tqdm
 
 # Very basic config

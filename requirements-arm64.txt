@@ -123,6 +123,8 @@ pydeck==0.9.1
     # via streamlit
 python-dateutil==2.9.0.post0
     # via pandas
+python-dotenv==1.1.1
+    # via sync-fed-contracts (pyproject.toml)
 pytz==2025.2
     # via pandas
 referencing==0.36.2

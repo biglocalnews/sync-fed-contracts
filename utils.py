@@ -1,10 +1,12 @@
 import logging
 import os
+import sys
 import zipfile
 from glob import glob
 from importlib import reload
 from pathlib import Path
 
+import dotenv
 from tqdm import tqdm
 
 # Very basic config
@@ -86,3 +88,55 @@ def list_loose_json():
         rawfiles.append(str(Path(rawfileraw).relative_to(datadir)))
     logger.debug(f"{len(rawfiles):,} files found loose.")
     return rawfiles
+
+
+def set_environment():
+    """
+    Load and validate environment variables from a `.env.<env>` file based on a required command-line argument.
+
+    This function:
+    - Requires the first command-line argument to be either 'test' or 'prod'
+    - Loads environment variables from the corresponding `.env.test` or `.env.prod` file
+    - Verifies that all required environment variables are present and non-empty
+    - Logs success or exits with errors if configuration is missing or invalid
+
+    Returns:
+        str: The name of the environment that was successfully loaded ('test' or 'prod').
+
+    Raises:
+        SystemExit: If the CLI argument is missing or invalid.
+        RuntimeError: If any required environment variable is missing or empty.
+    """
+    if len(sys.argv) < 2:
+        logger.error("python run.py <test|prod>")
+        sys.exit(1)
+
+    env = sys.argv[1].strip()
+    if env not in ["test", "prod"]:
+        logger.error(f"Invalid env '{env}'. Use 'test' or 'prod'.")
+        sys.exit(1)
+
+    # Get the directory this script is in
+    script_dir = Path(__file__).parent
+    # Build path to the .env file relative to this script
+    dotenv_path = script_dir / f".env.{env}"
+
+    logger.info(f"Loading environment from: {dotenv_path}")
+    load_dotenv(dotenv_path=dotenv_path, override=True)
+    # make sure all required env vars are present
+    required_env_vars = [
+        "BLN_API_TOKEN",
+        "BLN_PROJECT_ID",
+        "SLACK_ERROR_TOKEN",
+        "SLACK_ERROR_CHANNEL_ID",
+    ]
+    for key in required_env_vars:
+        value = os.environ.get(key)
+        if not value or not value.strip():
+            logger.error(f"Missing or empty: {key} (from {dotenv_path})")
+            raise RuntimeError(
+                f"Required env variable '{key}' is missing or empty in {dotenv_path}"
+            )
+    logger.info(f"{dotenv_path} successsfully loaded")
+    return env
+

@@ -95,6 +95,7 @@ async def fetch_a_date(localdate: datetime):
 
 
 def run_pipeline(environment):
+    utils.fetch_json_archive()
     global json_avail
     json_avail = utils.list_json()  # Get list of available JSON.
     today = datetime.datetime.now()

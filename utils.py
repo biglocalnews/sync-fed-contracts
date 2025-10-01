@@ -6,6 +6,7 @@ from glob import glob
 from importlib import reload
 from pathlib import Path
 
+from bln import Client
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -22,6 +23,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
+def fetch_json_archive():
+    logger.debug("Fetching JSON archive.")
+    bln_api = os.environ["BLN_API_TOKEN"]
+    bln = Client(bln_api)
+    project = bln.get_project_by_name("Federal contract cancellations")
+    project_id = project["id"]
+    client.download_file(project_id, "archived_json.zip", output_dir=datadir)
+    return()
 
 def archive_json(deleteafterarchiving=True):
     rawfiles = list_loose_json()

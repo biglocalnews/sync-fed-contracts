@@ -95,7 +95,11 @@ async def fetch_a_date(localdate: datetime):
 
 
 def run_pipeline(environment):
-    utils.fetch_json_archive()
+    if not utils.have_json_archive():
+        logger.debug("Need to download a ZIP with archived data.")
+        utils.fetch_json_archive()
+    else:
+        logger.debug("Reusing old ZIP of archived data.")
     global json_avail
     json_avail = utils.list_json()  # Get list of available JSON.
     today = datetime.datetime.now()

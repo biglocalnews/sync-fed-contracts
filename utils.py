@@ -23,6 +23,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
+def have_json_archive():
+    return(os.path.exists(archivefile))
+
+
 def fetch_json_archive():
     logger.debug("Fetching JSON archive.")
     bln_api = os.environ["BLN_API_TOKEN"]
@@ -31,6 +35,7 @@ def fetch_json_archive():
     project_id = project["id"]
     client.download_file(project_id, "archived_json.zip", output_dir=datadir)
     return()
+
 
 def archive_json(deleteafterarchiving=True):
     rawfiles = list_loose_json()

@@ -284,7 +284,9 @@ if selected_keyword:
 
 st.markdown(
     """
-This dashboard lets you explore and download data about canceled federal contracts. :point_left: Use the dropdowns in the sidebar to filter the data by performance location or vendor location. :arrow_down: Hover on the table to download the filtered data.
+This dashboard lets you explore and download data about canceled federal contracts.
+:point_left: Use the dropdowns in the sidebar to filter the data by performance location or vendor location.
+:arrow_down: Hover on the table to download the filtered data.
 
 """
 )
@@ -342,10 +344,11 @@ st.markdown(
     """
 
 
-### This is not the full dataset.
-We’ve limited the number of columns and renamed them for clarity and ease of use. You can find a full list of original column names and definitions here, and download the complete dataset — including both renamed and original columns — as the [Big Local News Federal Contracts dataset](https://biglocalnews.org/federal-contracts/) (accessible with a free account). The data was sourced from this [federal procurement portal](https://www.fpds.gov/fpdsng_cms/index.php/en/) using the code in [this GitHub repository](https://github.com/biglocalnews/sync-fed-contracts).
+### The full "terminated for convenience" dataset has more columns.
+We’ve limited the number of columns here and renamed them for clarity and ease of use. You can find a full list of original column names and definitions here, and download the complete dataset — including renamed and original columns — as the [Big Local News Federal Contracts dataset](https://biglocalnews.org/#/project/UHJvamVjdDpjZjgyZTRkYS0xNTQ4LTQ4NGUtOTk2MC1mNzk4ZTg4NmY5ODM=) (accessible with a free account). The data was sourced from this [federal procurement portal](https://www.fpds.gov/fpdsng_cms/index.php/en/) using the code in [this GitHub repository](https://github.com/biglocalnews/sync-fed-contracts).
 
-We also limited the data only to terminations “for convenience.” This excludes contracts terminated for cause, default, legal reasons, or administrative closeout. You can read more about how terminations are categorized [here](https://www.dau.edu/acquipedia-article/contract-termination).
+### We also track more cancellations data.
+This dashboard shows only terminations “for convenience,” defined as "the exercise of the government’s right to completely or partially terminate performance of work under a contract when it is in the government’s interest." This excludes contracts terminated for cause, default, legal reasons, or administrative closeout, which are included separately in the [Big Local News Federal Contracts dataset](https://biglocalnews.org/#/project/UHJvamVjdDpjZjgyZTRkYS0xNTQ4LTQ4NGUtOTk2MC1mNzk4ZTg4NmY5ODM=). You can read more about how terminations are categorized [here](https://www.dau.edu/acquipedia-article/contract-termination).
 
 ### Date filters are based on the cancellation date.
 Our system gathers contract termination records as they are reported to FPDS. We began collecting data on January 20, but users may see contracts canceled before that date due to reporting delays — for example, some Q4 terminations from the previous year were not reported until after 1/20.

@@ -24,8 +24,9 @@ logging.basicConfig(
 reload(logging)
 logger = logging.getLogger()
 
+
 def have_json_archive():
-    return(os.path.exists(archivefile))
+    return os.path.exists(archivefile)
 
 
 """If running copy-pasted code:
@@ -40,7 +41,9 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=loggin
 logger = logging.getLogger()
 """
 
+
 def fetch_json_archive():
+    """Code is stalling for some reason."""
     logger.debug("Fetching JSON archive.")
     logger.debug("Getting token from environment")
     print("Getting token")
@@ -54,9 +57,19 @@ def fetch_json_archive():
     logger.debug("Extracting project ID")
     project_id = project["id"]
     print(f"Trying to download file from project_id {project_id} to datadir {datadir}")
-    logger.debug(f"Trying to download file from project_id {project_id} to datadir {datadir}")
+    logger.debug(
+        f"Trying to download file from project_id {project_id} to datadir {datadir}"
+    )
     bln.download_file(project_id, "archived_json.zip", output_dir=datadir)
-    return()
+    return ()
+
+
+def fetch_json_archive_not():
+    logger.error(
+        "Please download the archived_json.zip file from the appropriate BLN archive."
+    )
+    sys.exit()
+    return
 
 
 def archive_json(deleteafterarchiving=True):
@@ -175,4 +188,3 @@ def set_environment():
             )
     logger.info(f"{dotenv_path} successsfully loaded")
     return env
-

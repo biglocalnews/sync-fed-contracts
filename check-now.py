@@ -2,19 +2,21 @@ import os
 
 import papermill
 
-if os.path.exists("/usr/bin/python3"):
+if os.path.exists("/opt/scrapers/sync-fed-contracts/venv/bin/python"):
+    mypython = "/opt/scrapers/sync-fed-contracts/venv/bin/python"
+elif os.path.exists("/usr/bin/python3"):
     mypython = "/usr/bin/python3"
 else:
     mypython = "python"
 
 os.system(f"{mypython} sync-fed-contracts.py")
 
-try:
-    papermill.execute_notebook(
+#try:
+papermill.execute_notebook(
         "extract-to-csvs.ipynb",
         "ignore-extract-to-csvs.ipynb",
         log_output=True,
         log_level="debug",
     )
-except:
-    print("Failure with extract!")
+#except:
+#    print("Failure with extract!")

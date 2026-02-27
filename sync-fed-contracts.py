@@ -37,6 +37,9 @@ logger = logging.getLogger()
 
 json_avail = list_json()
 
+bad_dates = ["2025-11-13", "2025-11-14", "2025-11-15"]
+
+
 def screen_files(localdate):
     needfiles = False
     filedate = localdate.strftime("%Y-%m-%d")
@@ -46,7 +49,11 @@ def screen_files(localdate):
             needfiles = True
         # if not os.path.exists(filename):
         #    needfiles = True
-    if needfiles:
+    if needfiles and filedate in bad_dates:
+        logger.debug(
+            "! Missing files for {filedate}, but it's marked as bad data. Skipping."
+        )
+    elif needfiles and not filedate in bad_dates:
         logger.debug(f"Need files for {localdate}")
     return needfiles
 

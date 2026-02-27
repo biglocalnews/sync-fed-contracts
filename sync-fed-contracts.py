@@ -53,7 +53,7 @@ def screen_files(localdate):
         logger.debug(
             f"! Missing files for {filedate}, but it's marked as bad data. Skipping."
         )
-    elif needfiles and not filedate in bad_dates:
+    elif needfiles and filedate not in bad_dates:
         logger.debug(f"Need files for {localdate}")
     return needfiles
 

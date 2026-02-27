@@ -28,7 +28,7 @@ def archive_json(deleteafterarchiving=True):
         return
     jsonlist = list_archived_json()
     duplicates = []
-    for rawfile in rawfiles:
+    for rawfile in sorted(rawfiles):
         if rawfile in jsonlist:
             duplicates.append(rawfile)
     if len(duplicates) > 0:

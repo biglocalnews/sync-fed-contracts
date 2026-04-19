@@ -1,13 +1,15 @@
-.DS_Store
+.ipynb_checkpoints/
+venv
+__pycache__
+# Ignore all .env files
+.env.*
+# But don't ignore the example env files
+!.env.*.example
 data/
-.ipynb_checkpoints
-disused/
-collected*.csv
-column_review.csv
-file_summaries.csv
-ignore-*.ipynb
-Untitled.ipynb
-__pycache__/
-dashboard/__pycache__/
-bln-gcs-key.json
-cimar--scratch.ipynb
+runlog/*
+!runlog/.gitkeep
+tmp_data/
+# scatch files, start them with a "_"
+_*.py
+# ignore notebooks I tried to use
+*.ipynb

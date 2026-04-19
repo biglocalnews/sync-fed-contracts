@@ -5,9 +5,9 @@ import asyncio
 import datetime
 import json
 import os
-import socket
-from glob import glob
-from itertools import chain
+# import socket
+# from glob import glob
+# from itertools import chain
 
 from fpds import fpdsRequest
 from tqdm import tqdm
@@ -37,7 +37,9 @@ logger = logging.getLogger()
 
 json_avail = list_json()
 
-bad_dates = ["2025-11-13", "2025-11-14", "2025-11-15"]
+bad_dates = []  # This was built to exclude dates where '"title",' was on a line.
+# The data processing bug that created this should be fixed,
+# so this is vestigial code that ... should not ... be needed. Again.
 
 
 def screen_files(localdate):
@@ -59,6 +61,8 @@ def screen_files(localdate):
     return needfiles
 
 
+"""
+# This was resulting in some buggy files.
 async def fetch_a_date(localdate):
     needfiles = screen_files(localdate)
     if not needfiles:
@@ -77,6 +81,20 @@ async def fetch_a_date(localdate):
             reason: list(chain.from_iterable(request.result()))
             for (reason, request) in requests.items()
         }
+"""
+
+
+def fetch_date_by_reason(datewanted: datetime, reasoncode: str):
+    datestr = datewanted.strftime("%Y/%m/%d")
+
+    params_kwargs = {
+        "LAST_MOD_DATE": f"[{datestr}, {datestr}]",
+        "REASON_FOR_MODIFICATION": '"' + reasoncode + '"',
+    }
+
+    request = fpdsRequest(**params_kwargs, cli_run=False)
+    records = asyncio.run(request.data())
+    return records
 
 
 if __name__ == "__main__":
@@ -88,16 +106,16 @@ if __name__ == "__main__":
     )
 
     # Build out a progress bar, because the code runs take time.
-    with tqdm(total=days_to_find, desc="1900-00-00") as pbar:
+    with tqdm(total=days_to_find, desc="1900-00-00Z") as pbar:
         for dateincrement in range(0, days_to_find):  # Current date/today has no data
             targetdate = start + datetime.timedelta(days=dateincrement)
             filedate = targetdate.strftime("%Y-%m-%d")
             pbar.set_description(filedate)
-            data = asyncio.run(fetch_a_date(targetdate))
-            if data:  # If we got data back, not a None, save the data
+            if screen_files(targetdate):  # If we need data for the days
                 for reason in reasons:
+                    pbar.set_description(f"{filedate}{reason}")
+                    localdata = fetch_date_by_reason(targetdate, reason)
                     filename = f"{datadir}/contracts-{filedate}_{reason}.json"
-                    localdata = data[reason]
                     with open(filename, "w", encoding="utf-8") as outfile:
                         outfile.write(json.dumps(localdata, indent=4 * " "))
             pbar.update(1)
